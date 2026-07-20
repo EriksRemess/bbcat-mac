@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleExecutable</key><string>bbcat</string>
+    <key>CFBundleIdentifier</key><string>dev.bbcat.MacViewer</string>
+    <key>CFBundleIconFile</key><string>bbcat.icns</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <key>CFBundleName</key><string>bbcat</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>0.1.0</string>
+    <key>CFBundleVersion</key><string>1</string>
+    <key>LSMinimumSystemVersion</key><string>13.0</string>
+    <key>NSHighResolutionCapable</key><true/>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key><string>ANSI and BBS artwork</string>
+            <key>CFBundleTypeRole</key><string>Viewer</string>
+            <key>CFBundleTypeIconFile</key><string>bbcat.icns</string>
+            <key>LSHandlerRank</key><string>Alternate</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>dev.bbcat.ansi-art</string><string>dev.bbcat.ansi-ascii</string><string>dev.bbcat.diz</string><string>dev.bbcat.nfo</string>
+                <string>dev.bbcat.darkdraw</string><string>dev.bbcat.artworx</string>
+                <string>dev.bbcat.ripscrip</string><string>dev.bbcat.xbin</string>
+            </array>
+            <key>CFBundleTypeExtensions</key>
+            <array>
+                <string>ans</string><string>asc</string><string>diz</string><string>nfo</string>
+                <string>ddw</string><string>adf</string><string>rip</string><string>xb</string><string>xbin</string>
+            </array>
+        </dict>
+    </array>
+    <key>UTExportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key><string>dev.bbcat.ansi-art</string>
+            <key>UTTypeDescription</key><string>ANSI artwork</string>
+            <key>UTTypeConformsTo</key><array><string>public.content</string><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key><dict>
+                <key>public.filename-extension</key><array><string>ans</string></array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key><string>dev.bbcat.ansi-ascii</string>
+            <key>UTTypeDescription</key><string>ASCII artwork</string>
+            <key>UTTypeConformsTo</key><array><string>public.content</string><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key><dict>
+                <key>public.filename-extension</key><array><string>asc</string></array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key><string>dev.bbcat.diz</string>
+            <key>UTTypeDescription</key><string>DIZ artwork</string>
+            <key>UTTypeConformsTo</key><array><string>public.content</string><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key><dict>
+                <key>public.filename-extension</key><array><string>diz</string></array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key><string>dev.bbcat.nfo</string>
+            <key>UTTypeDescription</key><string>NFO artwork</string>
+            <key>UTTypeConformsTo</key><array><string>public.content</string><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key><dict>
+                <key>public.filename-extension</key><array><string>nfo</string></array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key><string>dev.bbcat.darkdraw</string>
+            <key>UTTypeDescription</key><string>DarkDraw artwork</string>
+            <key>UTTypeConformsTo</key><array><string>public.content</string><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key><dict>
+                <key>public.filename-extension</key><array><string>ddw</string></array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key><string>dev.bbcat.artworx</string>
+            <key>UTTypeDescription</key><string>ArtWorx artwork</string>
+            <key>UTTypeConformsTo</key><array><string>public.content</string><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key><dict>
+                <key>public.filename-extension</key><array><string>adf</string></array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key><string>dev.bbcat.ripscrip</string>
+            <key>UTTypeDescription</key><string>RIPscrip artwork</string>
+            <key>UTTypeConformsTo</key><array><string>public.content</string><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key><dict>
+                <key>public.filename-extension</key><array><string>rip</string></array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key><string>dev.bbcat.xbin</string>
+            <key>UTTypeDescription</key><string>XBin artwork</string>
+            <key>UTTypeConformsTo</key><array><string>public.content</string><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key><dict>
+                <key>public.filename-extension</key><array><string>xb</string><string>xbin</string></array>
+            </dict>
+        </dict>
+    </array>
+</dict>
+</plist>

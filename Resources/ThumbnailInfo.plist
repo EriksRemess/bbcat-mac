@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleDisplayName</key><string>bbcat thumbnails</string>
+    <key>CFBundleExecutable</key><string>BBCatThumbnail</string>
+    <key>CFBundleIdentifier</key><string>dev.bbcat.MacViewer.Thumbnail</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <key>CFBundleName</key><string>BBCatThumbnail</string>
+    <key>CFBundlePackageType</key><string>XPC!</string>
+    <key>CFBundleSupportedPlatforms</key><array><string>MacOSX</string></array>
+    <key>CFBundleShortVersionString</key><string>0.1.0</string>
+    <key>CFBundleVersion</key><string>1</string>
+    <key>LSMinimumSystemVersion</key><string>13.0</string>
+    <key>NSExtension</key>
+    <dict>
+        <key>NSExtensionAttributes</key>
+        <dict>
+            <key>QLSupportedContentTypes</key>
+            <array>
+                <string>dev.bbcat.ansi-art</string>
+                <string>dev.bbcat.ansi-ascii</string>
+                <string>dev.bbcat.diz</string>
+                <string>dev.bbcat.darkdraw</string>
+                <string>dev.bbcat.artworx</string>
+                <string>dev.bbcat.ripscrip</string>
+                <string>dev.bbcat.xbin</string>
+            </array>
+            <key>QLThumbnailMinimumDimension</key><integer>1</integer>
+        </dict>
+        <key>NSExtensionPointIdentifier</key><string>com.apple.quicklook.thumbnail</string>
+        <key>NSExtensionPrincipalClass</key><string>ThumbnailProvider</string>
+    </dict>
+</dict>
+</plist>

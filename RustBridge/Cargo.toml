@@ -1,0 +1,13 @@
+[package]
+name = "bbcat-bridge"
+version = "0.1.0"
+edition = "2024"
+license = "MIT"
+repository = "https://github.com/EriksRemess/bbcat-mac"
+publish = false
+
+[lib]
+crate-type = ["staticlib", "rlib"]
+
+[dependencies]
+bbcat = "0.5.7"
