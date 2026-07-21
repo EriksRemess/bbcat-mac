@@ -13,6 +13,22 @@ enum BBCatError: LocalizedError {
         return .message(String(cString: pointer))
     }
 }
+
+enum BBCatWelcome {
+    static func image(scale: Int) throws -> NSImage {
+        var frame = BbcatFrame(data: nil, length: 0, duration_ns: 0)
+        guard bbcat_render_welcome(scale, &frame) != 0, let bytes = frame.data else {
+            throw BBCatError.last("Could not render the welcome artwork")
+        }
+        defer { bbcat_bytes_free(bytes, frame.length) }
+        let data = Data(bytes: bytes, count: frame.length)
+        guard let image = NSImage(data: data) else {
+            throw BBCatError.message("The renderer returned an invalid welcome image")
+        }
+        return image
+    }
+}
+
 final class BBCatDocument {
     private let handle: OpaquePointer
     let frameCount: Int

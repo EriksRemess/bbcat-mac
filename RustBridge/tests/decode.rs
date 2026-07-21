@@ -44,3 +44,25 @@ fn decodes_and_renders_ansi_through_the_c_api() {
         bbcat_bridge::bbcat_document_free(document);
     }
 }
+
+#[test]
+fn renders_welcome_artwork_through_the_c_api() {
+    let mut frame = bbcat_bridge::BbcatFrame {
+        data: std::ptr::null_mut(),
+        length: 0,
+        duration_ns: 0,
+    };
+    assert_eq!(
+        unsafe { bbcat_bridge::bbcat_render_welcome(1, &mut frame) },
+        1
+    );
+    assert!(frame.length > 8);
+    assert_eq!(
+        unsafe { std::slice::from_raw_parts(frame.data, 8) },
+        b"\x89PNG\r\n\x1a\n"
+    );
+    let png = unsafe { std::slice::from_raw_parts(frame.data, frame.length) };
+    assert_eq!(u32::from_be_bytes(png[16..20].try_into().unwrap()), 26 * 8);
+    assert_eq!(u32::from_be_bytes(png[20..24].try_into().unwrap()), 3 * 16);
+    unsafe { bbcat_bridge::bbcat_bytes_free(frame.data, frame.length) };
+}

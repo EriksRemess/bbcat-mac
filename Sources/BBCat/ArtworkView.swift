@@ -3,6 +3,7 @@ import AppKit
 final class ArtworkView: NSView {
     var image: NSImage? { didSet { needsDisplay = true } }
     var fitsImage = true { didSet { needsDisplay = true } }
+    var maximumFitScale: CGFloat? { didSet { needsDisplay = true } }
 
     override var isFlipped: Bool { true }
 
@@ -13,7 +14,8 @@ final class ArtworkView: NSView {
 
         let destination: NSRect
         if fitsImage {
-            let ratio = min(bounds.width / image.size.width, bounds.height / image.size.height)
+            var ratio = min(bounds.width / image.size.width, bounds.height / image.size.height)
+            if let maximumFitScale { ratio = min(ratio, maximumFitScale) }
             let size = NSSize(width: image.size.width * ratio, height: image.size.height * ratio)
             destination = NSRect(
                 x: (bounds.width - size.width) / 2,

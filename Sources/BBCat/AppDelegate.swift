@@ -1,8 +1,9 @@
 import AppKit
 
-final class AppDelegate: NSObject, NSApplicationDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let viewer = ViewerController()
     private let commandLineToolController = CommandLineToolController()
+    private var cliMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureMenus()
@@ -25,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let appItem = NSMenuItem()
         main.addItem(appItem)
         let appMenu = NSMenu()
+        appMenu.delegate = self
         appItem.submenu = appMenu
         let about = appMenu.addItem(
             withTitle: "About bbcat",
@@ -33,18 +35,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         )
         about.target = self
         appMenu.addItem(.separator())
-        let installCommand = appMenu.addItem(
-            withTitle: "Install or Update CLI…",
-            action: #selector(CommandLineToolController.install),
-            keyEquivalent: ""
-        )
-        installCommand.target = commandLineToolController
-        let uninstallCommand = appMenu.addItem(
-            withTitle: "Uninstall CLI…",
-            action: #selector(CommandLineToolController.uninstall),
-            keyEquivalent: ""
-        )
-        uninstallCommand.target = commandLineToolController
+        let cliCommand = NSMenuItem()
+        cliCommand.target = commandLineToolController
+        appMenu.addItem(cliCommand)
+        cliMenuItem = cliCommand
+        configureCLICommand()
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Quit bbcat", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
@@ -55,6 +50,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let open = fileMenu.addItem(withTitle: "Open…", action: Selector(("chooseFile")), keyEquivalent: "o")
         open.target = viewer
         NSApp.mainMenu = main
+    }
+
+    func menuWillOpen(_ menu: NSMenu) {
+        configureCLICommand()
+    }
+
+    private func configureCLICommand() {
+        guard let cliMenuItem else { return }
+        if case .installed = CommandLineToolInstaller().state() {
+            cliMenuItem.title = "Uninstall CLI…"
+            cliMenuItem.action = #selector(CommandLineToolController.uninstall)
+        } else {
+            cliMenuItem.title = "Install CLI…"
+            cliMenuItem.action = #selector(CommandLineToolController.install)
+        }
     }
 
     @objc private func showAbout() {

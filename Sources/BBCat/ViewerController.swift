@@ -24,6 +24,7 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
         window.delegate = self
         configureContent()
         configureToolbar()
+        showWelcomeArtwork()
     }
 
     required init?(coder: NSCoder) { fatalError("init(coder:) has not been implemented") }
@@ -49,11 +50,18 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
         window?.toolbarStyle = .unified
     }
 
+    private func showWelcomeArtwork() {
+        artworkView.image = try? BBCatWelcome.image(scale: 1)
+        artworkView.maximumFitScale = 2
+        artworkView.setAccessibilityLabel("Open an artwork to view it")
+    }
+
     func open(_ url: URL) {
         playbackGeneration &+= 1
         do {
             let loaded = try BBCatDocument(url: url)
             artworkDocument = loaded
+            artworkView.maximumFitScale = nil
             frameIndex = 0
             window?.title = loaded.displayTitle
             try displayFrame(generation: playbackGeneration, resizeWindow: true)

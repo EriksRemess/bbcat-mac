@@ -27,6 +27,7 @@ int32_t bbcat_document_render_thumbnail(
     size_t maximum_pixel_size,
     BbcatFrame *frame
 );
+int32_t bbcat_render_welcome(size_t scale, BbcatFrame *frame);
 char *bbcat_take_last_error(void);
 void bbcat_string_free(char *string);
 void bbcat_bytes_free(uint8_t *data, size_t length);

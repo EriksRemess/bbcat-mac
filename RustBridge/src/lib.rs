@@ -263,6 +263,53 @@ pub unsafe extern "C" fn bbcat_document_render_thumbnail(
 }
 
 #[unsafe(no_mangle)]
+/// Renders the app's ANSI-art welcome message with bbcat's built-in VGA font.
+///
+/// # Safety
+///
+/// `output` must point to writable [`BbcatFrame`] storage. Successful output
+/// bytes must be released once with [`bbcat_bytes_free`] using the returned
+/// length.
+pub unsafe extern "C" fn bbcat_render_welcome(scale: usize, output: *mut BbcatFrame) -> i32 {
+    if output.is_null() {
+        set_error("output was null");
+        return 0;
+    }
+
+    let ansi = concat!(
+        "\x1b[97mopen an artwork to view it\r\n\r\n",
+        "\x1b[90m          cmd-o\x1b[0m"
+    );
+    let result = bbcat::decode_with_options(
+        ansi.as_bytes(),
+        bbcat::DecodeOptions {
+            file_name: None,
+            width: Some(26),
+        },
+    )
+    .and_then(|document| document.encode_png(scale));
+
+    match result {
+        Ok(png) => {
+            let mut png = png.into_boxed_slice();
+            let frame = BbcatFrame {
+                data: png.as_mut_ptr(),
+                length: png.len(),
+                duration_ns: 0,
+            };
+            std::mem::forget(png);
+            // SAFETY: output is non-null and points to writable BbcatFrame storage.
+            unsafe { output.write(frame) };
+            1
+        }
+        Err(error) => {
+            set_error(error);
+            0
+        }
+    }
+}
+
+#[unsafe(no_mangle)]
 pub extern "C" fn bbcat_take_last_error() -> *mut c_char {
     LAST_ERROR.with(|slot| slot.borrow_mut().take().map_or(ptr::null_mut(), c_string))
 }
