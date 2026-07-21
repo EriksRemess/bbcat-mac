@@ -15,6 +15,7 @@ library is linked through a small C-compatible bridge.
 - Responsive aspect-fit display and native-size scrolling
 - Cropped Finder thumbnails
 - Full, uncropped Quick Look previews with the Space bar
+- Optional `bbcat` CLI installation and updates from the app menu
 
 ## Install
 

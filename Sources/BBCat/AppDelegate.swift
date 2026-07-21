@@ -2,6 +2,7 @@ import AppKit
 
 final class AppDelegate: NSObject, NSApplicationDelegate {
     private let viewer = ViewerController()
+    private let commandLineToolController = CommandLineToolController()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         configureMenus()
@@ -25,7 +26,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         main.addItem(appItem)
         let appMenu = NSMenu()
         appItem.submenu = appMenu
-        appMenu.addItem(withTitle: "About bbcat", action: #selector(NSApplication.orderFrontStandardAboutPanel(_:)), keyEquivalent: "")
+        let about = appMenu.addItem(
+            withTitle: "About bbcat",
+            action: #selector(showAbout),
+            keyEquivalent: ""
+        )
+        about.target = self
+        appMenu.addItem(.separator())
+        let installCommand = appMenu.addItem(
+            withTitle: "Install or Update CLI…",
+            action: #selector(CommandLineToolController.install),
+            keyEquivalent: ""
+        )
+        installCommand.target = commandLineToolController
+        let uninstallCommand = appMenu.addItem(
+            withTitle: "Uninstall CLI…",
+            action: #selector(CommandLineToolController.uninstall),
+            keyEquivalent: ""
+        )
+        uninstallCommand.target = commandLineToolController
         appMenu.addItem(.separator())
         appMenu.addItem(withTitle: "Quit bbcat", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
 
@@ -36,5 +55,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let open = fileMenu.addItem(withTitle: "Open…", action: Selector(("chooseFile")), keyEquivalent: "o")
         open.target = viewer
         NSApp.mainMenu = main
+    }
+
+    @objc private func showAbout() {
+        let credits = NSMutableAttributedString(string: "bbcat.dev")
+        credits.addAttribute(
+            .link,
+            value: URL(string: "https://bbcat.dev")!,
+            range: NSRange(location: 0, length: credits.length)
+        )
+        NSApp.orderFrontStandardAboutPanel(options: [.credits: credits])
     }
 }

@@ -137,6 +137,10 @@ jobs:
         run: |
           codesign --force --options runtime --timestamp \
             --keychain "$KEYCHAIN_PATH" \
+            --sign "$SIGNING_IDENTITY" \
+            "$APP_PATH/Contents/Helpers/bbcat"
+          codesign --force --options runtime --timestamp \
+            --keychain "$KEYCHAIN_PATH" \
             --entitlements Resources/Thumbnail.entitlements \
             --sign "$SIGNING_IDENTITY" \
             "$APP_PATH/Contents/PlugIns/BBCatThumbnail.appex"
