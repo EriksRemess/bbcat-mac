@@ -117,6 +117,18 @@ jobs:
             echo "No Developer ID Application identity was found in the imported certificate." >&2
             exit 1
           fi
+
+          CERTIFICATE_ISSUER="$(
+            security find-certificate -c "$SIGNING_IDENTITY" -p "$KEYCHAIN_PATH" \
+              | openssl x509 -noout -issuer -nameopt RFC2253
+          )"
+          echo "$CERTIFICATE_ISSUER"
+          if [[ "$CERTIFICATE_ISSUER" != *"CN=Developer ID Certification Authority"* \
+            || "$CERTIFICATE_ISSUER" != *"OU=G2"* ]]; then
+            echo "The Developer ID Application certificate was not issued by Apple's G2 authority." >&2
+            exit 1
+          fi
+
           echo "SIGNING_IDENTITY=$SIGNING_IDENTITY" >> "$GITHUB_ENV"
 
       - name: Sign app with Developer ID
