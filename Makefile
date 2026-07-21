@@ -3,7 +3,7 @@ EXTENSION := $(APP)/Contents/PlugIns/BBCatThumbnail.appex
 PREVIEW := $(APP)/Contents/PlugIns/BBCatPreview.appex
 RUST_LIB := RustBridge/target/release/libbbcat_bridge.a
 # Keep this pinned to the bbcat version in RustBridge/Cargo.lock.
-BBCAT_CLI_VERSION := 0.5.7
+BBCAT_CLI_VERSION := 0.5.8
 CLI_INSTALL_ROOT := build/bbcat-cli
 CLI_TARGET_DIR := build/bbcat-cli-target
 CLI_BINARY := $(CLI_INSTALL_ROOT)/bin/bbcat

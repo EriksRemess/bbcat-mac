@@ -10,4 +10,4 @@ publish = false
 crate-type = ["staticlib", "rlib"]
 
 [dependencies]
-bbcat = "0.5.7"
+bbcat = "0.5.8"
