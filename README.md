@@ -4,40 +4,36 @@ A native AppKit viewer for ANSI and BBS artwork, ported from `bbcat-gtk`.
 The UI is written in Swift and the original Rust `bbcat` decoder/rendering
 library is linked through a small C-compatible bridge.
 
-It supports ANSI (`.ans`, `.asc`, `.diz`), NFO, DarkDraw (`.ddw`), ArtWorx
-(`.adf`), RIPscrip (`.rip`), and XBin (`.xb`, `.xbin`) artwork. Static and
-animated documents, SAUCE metadata titles, crisp ×1/×2 rendering, responsive
-aspect-fit display, oversized native-size scrolling, Finder opening, and
-command-line paths are supported. The app also embeds a Quick Look Thumbnail
-Extension for cropped Finder icons and a separate Quick Look Preview Extension
-for full, uncropped Spacebar previews.
+## Features
 
-## Requirements
+- ANSI (`.ans`, `.asc`, `.diz`) and NFO artwork
+- DarkDraw (`.ddw`), ArtWorx (`.adf`), and RIPscrip (`.rip`)
+- XBin (`.xb`, `.xbin`)
+- Static and animated documents
+- SAUCE metadata titles
+- Crisp ×1 and ×2 rendering
+- Responsive aspect-fit display and native-size scrolling
+- Cropped Finder thumbnails
+- Full, uncropped Quick Look previews with the Space bar
 
-- macOS 13 or newer
-- Swift toolchain / Xcode Command Line Tools
-- Rust
+## Install
 
-## Build and run
+Download `bbcat-macos-arm64.zip` from the
+[latest release](https://github.com/EriksRemess/bbcat-mac/releases/latest),
+unzip it, and move `bbcat.app` to `/Applications`.
 
-```sh
-make
-open build/bbcat.app
-```
+Releases support Apple silicon Macs running macOS 13 or newer. Launch bbcat
+once after installation to register its document types and Finder extensions.
 
-Or open a file from Terminal:
+## Code
 
-```sh
-build/bbcat.app/Contents/MacOS/bbcat artwork.ans
-```
+The macOS interface, document viewer, animation, and Quick Look extensions are
+implemented in Swift with AppKit. The Rust bridge wraps the `bbcat` rendering
+library behind a small C-compatible API shared by the app and both extensions.
 
-Run the Rust bridge tests with `make test`.
+- [`Sources/BBCat`](Sources/BBCat): application and artwork viewer
+- [`Sources/BBCatThumbnail`](Sources/BBCatThumbnail): Finder thumbnails
+- [`Sources/BBCatPreview`](Sources/BBCatPreview): Quick Look previews
+- [`RustBridge`](RustBridge): Rust decoder and rendering bridge
 
-After copying the app to `/Applications`, launch it once so Launch Services can
-discover its document types and thumbnail extension. Development builds are
-ad-hoc signed by `make`; distribution builds still need Developer ID signing
-and notarization.
-
-The default build targets the current Mac architecture. For distribution,
-build the Rust library and Swift executable separately for `arm64` and
-`x86_64`, combine matching binaries with `lipo`, then sign/notarize the app.
+The project is available under the [MIT License](LICENSE).
