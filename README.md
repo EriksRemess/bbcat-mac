@@ -1,21 +1,24 @@
 # bbcat for macOS
 
-A native AppKit viewer for ANSI and BBS artwork, ported from `bbcat-gtk`.
-The UI is written in Swift and the original Rust `bbcat` decoder/rendering
-library is linked through a small C-compatible bridge.
+A native AppKit viewer for ANSI, ASCII, DIZ, NFO, DarkDraw, ArtWorx, RIPscrip,
+and XBin artwork, ported from `bbcat-gtk`. The Swift interface uses the original
+Rust [`bbcat`](https://bbcat.dev/) decoder and renderer through a small
+C-compatible bridge.
 
 ## Features
 
-- ANSI (`.ans`, `.asc`, `.diz`) and NFO artwork
-- DarkDraw (`.ddw`), ArtWorx (`.adf`), and RIPscrip (`.rip`)
-- XBin (`.xb`, `.xbin`)
-- Static and animated documents
-- SAUCE metadata titles
-- Crisp ×1 and ×2 rendering
-- Responsive aspect-fit display and native-size scrolling
-- Cropped Finder thumbnails
+- ANSI (`.ans`), ASCII (`.asc`), DIZ (`.diz`), and NFO (`.nfo`)
+- DarkDraw (`.ddw`), ArtWorx (`.adf`), RIPscrip (`.rip`), and XBin (`.xb`,
+  `.xbin`)
+- Opening from Finder, the app's file picker, or a path passed to the app
+- Static artwork and timed ANSI animation playback
+- SAUCE titles, authors, and dates in the window title
+- Crisp ×1 and ×2 rendering with responsive aspect-fit display
+- Native-size scrolling for artwork larger than the available screen
+- Format-specific, cropped Finder thumbnails with extension badges
 - Full, uncropped Quick Look previews with the Space bar
-- Optional `bbcat` CLI installation and updates from the app menu
+- Optional bundled `bbcat` CLI, installed or removed from the app menu as
+  `~/.local/bin/bbcat`
 
 ## Install
 
@@ -23,17 +26,20 @@ Download `bbcat-macos-arm64.zip` from the
 [latest release](https://github.com/EriksRemess/bbcat-mac/releases/latest),
 unzip it, and move `bbcat.app` to `/Applications`.
 
-Releases support Apple silicon Macs running macOS 13 or newer. Launch bbcat
-once after installation to register its document types and Finder extensions.
+Releases are ready to use on Apple silicon Macs running macOS 13 or newer; no
+separate Rust or `bbcat` installation is required. Launch bbcat once after
+installation to register its document types and Finder extensions.
 
 ## Code
 
 The macOS interface, document viewer, animation, and Quick Look extensions are
 implemented in Swift with AppKit. The Rust bridge wraps the `bbcat` rendering
-library behind a small C-compatible API shared by the app and both extensions.
+library behind a small C-compatible API shared by the app, Finder thumbnail
+providers, and Quick Look preview provider.
 
 - [`Sources/BBCat`](Sources/BBCat): application and artwork viewer
-- [`Sources/BBCatThumbnail`](Sources/BBCatThumbnail): Finder thumbnails
+- [`Sources/BBCatThumbnail`](Sources/BBCatThumbnail): renderer shared by the
+  format-specific Finder thumbnail extensions
 - [`Sources/BBCatPreview`](Sources/BBCatPreview): Quick Look previews
 - [`RustBridge`](RustBridge): Rust decoder and rendering bridge
 
