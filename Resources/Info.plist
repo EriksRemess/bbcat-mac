@@ -16,21 +16,60 @@
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>
-            <key>CFBundleTypeName</key><string>ANSI and BBS artwork</string>
+            <key>CFBundleTypeName</key><string>ANSI artwork</string>
             <key>CFBundleTypeRole</key><string>Viewer</string>
             <key>CFBundleTypeIconFile</key><string>bbcat.icns</string>
             <key>LSHandlerRank</key><string>Alternate</string>
-            <key>LSItemContentTypes</key>
-            <array>
-                <string>dev.bbcat.ansi-art</string><string>dev.bbcat.ansi-ascii</string><string>dev.bbcat.diz</string><string>dev.bbcat.nfo</string>
-                <string>dev.bbcat.darkdraw</string><string>dev.bbcat.artworx</string>
-                <string>dev.bbcat.ripscrip</string><string>dev.bbcat.xbin</string>
-            </array>
-            <key>CFBundleTypeExtensions</key>
-            <array>
-                <string>ans</string><string>asc</string><string>diz</string><string>nfo</string>
-                <string>ddw</string><string>adf</string><string>rip</string><string>xb</string><string>xbin</string>
-            </array>
+            <key>LSItemContentTypes</key><array><string>dev.bbcat.ansi-art</string></array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key><string>ASCII artwork</string>
+            <key>CFBundleTypeRole</key><string>Viewer</string>
+            <key>CFBundleTypeIconFile</key><string>bbcat.icns</string>
+            <key>LSHandlerRank</key><string>Alternate</string>
+            <key>LSItemContentTypes</key><array><string>dev.bbcat.ansi-ascii</string></array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key><string>DIZ file</string>
+            <key>CFBundleTypeRole</key><string>Viewer</string>
+            <key>CFBundleTypeIconFile</key><string>bbcat.icns</string>
+            <key>LSHandlerRank</key><string>Alternate</string>
+            <key>LSItemContentTypes</key><array><string>dev.bbcat.diz</string></array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key><string>NFO file</string>
+            <key>CFBundleTypeRole</key><string>Viewer</string>
+            <key>CFBundleTypeIconFile</key><string>bbcat.icns</string>
+            <key>LSHandlerRank</key><string>Alternate</string>
+            <key>LSItemContentTypes</key><array><string>dev.bbcat.nfo</string></array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key><string>DarkDraw artwork</string>
+            <key>CFBundleTypeRole</key><string>Viewer</string>
+            <key>CFBundleTypeIconFile</key><string>bbcat.icns</string>
+            <key>LSHandlerRank</key><string>Alternate</string>
+            <key>LSItemContentTypes</key><array><string>dev.bbcat.darkdraw</string></array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key><string>ArtWorx artwork</string>
+            <key>CFBundleTypeRole</key><string>Viewer</string>
+            <key>CFBundleTypeIconFile</key><string>bbcat.icns</string>
+            <key>LSHandlerRank</key><string>Alternate</string>
+            <key>LSItemContentTypes</key><array><string>dev.bbcat.artworx</string></array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key><string>RIPscrip artwork</string>
+            <key>CFBundleTypeRole</key><string>Viewer</string>
+            <key>CFBundleTypeIconFile</key><string>bbcat.icns</string>
+            <key>LSHandlerRank</key><string>Alternate</string>
+            <key>LSItemContentTypes</key><array><string>dev.bbcat.ripscrip</string></array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key><string>XBin artwork</string>
+            <key>CFBundleTypeRole</key><string>Viewer</string>
+            <key>CFBundleTypeIconFile</key><string>bbcat.icns</string>
+            <key>LSHandlerRank</key><string>Alternate</string>
+            <key>LSItemContentTypes</key><array><string>dev.bbcat.xbin</string></array>
         </dict>
     </array>
     <key>UTExportedTypeDeclarations</key>
@@ -53,7 +92,7 @@
         </dict>
         <dict>
             <key>UTTypeIdentifier</key><string>dev.bbcat.diz</string>
-            <key>UTTypeDescription</key><string>DIZ artwork</string>
+            <key>UTTypeDescription</key><string>DIZ file</string>
             <key>UTTypeConformsTo</key><array><string>public.content</string><string>public.data</string></array>
             <key>UTTypeTagSpecification</key><dict>
                 <key>public.filename-extension</key><array><string>diz</string></array>
@@ -61,7 +100,7 @@
         </dict>
         <dict>
             <key>UTTypeIdentifier</key><string>dev.bbcat.nfo</string>
-            <key>UTTypeDescription</key><string>NFO artwork</string>
+            <key>UTTypeDescription</key><string>NFO file</string>
             <key>UTTypeConformsTo</key><array><string>public.content</string><string>public.data</string></array>
             <key>UTTypeTagSpecification</key><dict>
                 <key>public.filename-extension</key><array><string>nfo</string></array>
