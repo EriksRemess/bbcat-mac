@@ -17,7 +17,7 @@ jobs:
       contents: read
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Verify ARM64 runner
         run: test "$(uname -m)" = arm64
@@ -40,14 +40,10 @@ jobs:
       contents: write
     env:
       APP_PATH: build/bbcat.app
-      CERTIFICATE_PATH: ${{ runner.temp }}/developer-id.p12
-      KEYCHAIN_PATH: ${{ runner.temp }}/bbcat-signing.keychain-db
-      API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
-      NOTARY_ARCHIVE: ${{ runner.temp }}/bbcat-notarization.zip
       RELEASE_ARCHIVE: dist/bbcat-macos-arm64.zip
     steps:
       - name: Check out repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Verify ARM64 runner
         run: test "$(uname -m)" = arm64
@@ -76,6 +72,8 @@ jobs:
       - name: Import Developer ID certificate
         shell: bash
         env:
+          CERTIFICATE_PATH: ${{ runner.temp }}/developer-id.p12
+          KEYCHAIN_PATH: ${{ runner.temp }}/bbcat-signing.keychain-db
           MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
           MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
         run: |
@@ -111,6 +109,8 @@ jobs:
           echo "SIGNING_IDENTITY=$SIGNING_IDENTITY" >> "$GITHUB_ENV"
 
       - name: Sign app with Developer ID
+        env:
+          KEYCHAIN_PATH: ${{ runner.temp }}/bbcat-signing.keychain-db
         run: |
           codesign --force --options runtime --timestamp \
             --keychain "$KEYCHAIN_PATH" \
@@ -131,6 +131,8 @@ jobs:
       - name: Notarize and staple
         shell: bash
         env:
+          API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+          NOTARY_ARCHIVE: ${{ runner.temp }}/bbcat-notarization.zip
           APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
           APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
           APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
@@ -168,6 +170,11 @@ jobs:
 
       - name: Remove temporary credentials
         if: always()
+        env:
+          CERTIFICATE_PATH: ${{ runner.temp }}/developer-id.p12
+          KEYCHAIN_PATH: ${{ runner.temp }}/bbcat-signing.keychain-db
+          API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+          NOTARY_ARCHIVE: ${{ runner.temp }}/bbcat-notarization.zip
         run: |
           security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
           rm -f "$CERTIFICATE_PATH" "$API_KEY_PATH" "$NOTARY_ARCHIVE"
