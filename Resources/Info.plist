@@ -4,7 +4,7 @@
 <dict>
     <key>CFBundleDevelopmentRegion</key><string>en</string>
     <key>CFBundleExecutable</key><string>bbcat</string>
-    <key>CFBundleIdentifier</key><string>dev.bbcat.MacViewer</string>
+    <key>CFBundleIdentifier</key><string>dev.bbcat.mac</string>
     <key>CFBundleIconFile</key><string>bbcat.icns</string>
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
     <key>CFBundleName</key><string>bbcat</string>

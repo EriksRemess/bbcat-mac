@@ -5,7 +5,7 @@
     <key>CFBundleDevelopmentRegion</key><string>en</string>
     <key>CFBundleDisplayName</key><string>bbcat previews</string>
     <key>CFBundleExecutable</key><string>BBCatPreview</string>
-    <key>CFBundleIdentifier</key><string>dev.bbcat.MacViewer.Preview</string>
+    <key>CFBundleIdentifier</key><string>dev.bbcat.mac.preview</string>
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
     <key>CFBundleName</key><string>BBCatPreview</string>
     <key>CFBundlePackageType</key><string>XPC!</string>
