@@ -1,0 +1,173 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Test ARM64 build
+    runs-on: macos-15
+    permissions:
+      contents: read
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify ARM64 runner
+        run: test "$(uname -m)" = arm64
+
+      - name: Test
+        run: make test
+
+      - name: Build
+        run: make
+
+      - name: Verify ad-hoc signature
+        run: codesign --verify --deep --strict --verbose=2 build/bbcat.app
+
+  release:
+    name: Sign, notarize, and release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: test
+    runs-on: macos-15
+    permissions:
+      contents: write
+    env:
+      APP_PATH: build/bbcat.app
+      CERTIFICATE_PATH: ${{ runner.temp }}/developer-id.p12
+      KEYCHAIN_PATH: ${{ runner.temp }}/bbcat-signing.keychain-db
+      API_KEY_PATH: ${{ runner.temp }}/AuthKey.p8
+      NOTARY_ARCHIVE: ${{ runner.temp }}/bbcat-notarization.zip
+      RELEASE_ARCHIVE: dist/bbcat-macos-arm64.zip
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Verify ARM64 runner
+        run: test "$(uname -m)" = arm64
+
+      - name: Build
+        run: make
+
+      - name: Set bundle version from tag
+        shell: bash
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tags must use vMAJOR.MINOR.PATCH (for example, v0.1.0)." >&2
+            exit 1
+          fi
+
+          for PLIST in \
+            "$APP_PATH/Contents/Info.plist" \
+            "$APP_PATH/Contents/PlugIns/BBCatThumbnail.appex/Contents/Info.plist" \
+            "$APP_PATH/Contents/PlugIns/BBCatPreview.appex/Contents/Info.plist"
+          do
+            /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$PLIST"
+            /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" "$PLIST"
+          done
+
+      - name: Import Developer ID certificate
+        shell: bash
+        env:
+          MACOS_CERTIFICATE: ${{ secrets.MACOS_CERTIFICATE }}
+          MACOS_CERTIFICATE_PASSWORD: ${{ secrets.MACOS_CERTIFICATE_PASSWORD }}
+        run: |
+          if [[ -z "$MACOS_CERTIFICATE" || -z "$MACOS_CERTIFICATE_PASSWORD" ]]; then
+            echo "The Developer ID certificate secrets are missing." >&2
+            exit 1
+          fi
+
+          printf '%s' "$MACOS_CERTIFICATE" | base64 --decode > "$CERTIFICATE_PATH"
+          KEYCHAIN_PASSWORD="$(uuidgen)$(uuidgen)"
+
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERTIFICATE_PATH" \
+            -P "$MACOS_CERTIFICATE_PASSWORD" \
+            -A \
+            -t cert \
+            -f pkcs12 \
+            -k "$KEYCHAIN_PATH"
+          security set-key-partition-list \
+            -S apple-tool:,apple:,codesign: \
+            -s \
+            -k "$KEYCHAIN_PASSWORD" \
+            "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH"
+
+          SIGNING_IDENTITY="$(security find-identity -v -p codesigning "$KEYCHAIN_PATH" | awk -F '"' '/Developer ID Application/ { print $2; exit }')"
+          if [[ -z "$SIGNING_IDENTITY" ]]; then
+            echo "No Developer ID Application identity was found in the imported certificate." >&2
+            exit 1
+          fi
+          echo "SIGNING_IDENTITY=$SIGNING_IDENTITY" >> "$GITHUB_ENV"
+
+      - name: Sign app with Developer ID
+        run: |
+          codesign --force --options runtime --timestamp \
+            --keychain "$KEYCHAIN_PATH" \
+            --entitlements Resources/Thumbnail.entitlements \
+            --sign "$SIGNING_IDENTITY" \
+            "$APP_PATH/Contents/PlugIns/BBCatThumbnail.appex"
+          codesign --force --options runtime --timestamp \
+            --keychain "$KEYCHAIN_PATH" \
+            --entitlements Resources/Thumbnail.entitlements \
+            --sign "$SIGNING_IDENTITY" \
+            "$APP_PATH/Contents/PlugIns/BBCatPreview.appex"
+          codesign --force --options runtime --timestamp \
+            --keychain "$KEYCHAIN_PATH" \
+            --sign "$SIGNING_IDENTITY" \
+            "$APP_PATH"
+          codesign --verify --deep --strict --verbose=2 "$APP_PATH"
+
+      - name: Notarize and staple
+        shell: bash
+        env:
+          APPLE_API_KEY: ${{ secrets.APPLE_API_KEY }}
+          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+          APPLE_API_ISSUER_ID: ${{ secrets.APPLE_API_ISSUER_ID }}
+        run: |
+          if [[ -z "$APPLE_API_KEY" || -z "$APPLE_API_KEY_ID" || -z "$APPLE_API_ISSUER_ID" ]]; then
+            echo "The App Store Connect API secrets are missing." >&2
+            exit 1
+          fi
+
+          printf '%s' "$APPLE_API_KEY" | base64 --decode > "$API_KEY_PATH"
+          chmod 600 "$API_KEY_PATH"
+          ditto -c -k --keepParent "$APP_PATH" "$NOTARY_ARCHIVE"
+          xcrun notarytool submit "$NOTARY_ARCHIVE" \
+            --key "$API_KEY_PATH" \
+            --key-id "$APPLE_API_KEY_ID" \
+            --issuer "$APPLE_API_ISSUER_ID" \
+            --wait
+          xcrun stapler staple "$APP_PATH"
+          xcrun stapler validate "$APP_PATH"
+          spctl --assess --type execute --verbose=2 "$APP_PATH"
+
+      - name: Package release
+        run: |
+          mkdir -p dist
+          ditto -c -k --keepParent "$APP_PATH" "$RELEASE_ARCHIVE"
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" "$RELEASE_ARCHIVE" \
+            --verify-tag \
+            --generate-notes \
+            --title "bbcat $GITHUB_REF_NAME"
+
+      - name: Remove temporary credentials
+        if: always()
+        run: |
+          security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
+          rm -f "$CERTIFICATE_PATH" "$API_KEY_PATH" "$NOTARY_ARCHIVE"
