@@ -1,4 +1,5 @@
 import AppKit
+import CoreServices
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private let viewer = ViewerController()
@@ -6,6 +7,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var cliMenuItem: NSMenuItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        _ = LSRegisterURL(Bundle.main.bundleURL as CFURL, true)
         configureMenus()
         viewer.showWindow(nil)
         NSApp.activate(ignoringOtherApps: true)

@@ -46,7 +46,7 @@ $(APP)/Contents/MacOS/bbcat: Makefile $(RUST_LIB) $(SWIFT_SOURCES) Resources/Inf
 	swiftc -module-cache-path $(CURDIR)/build/ModuleCache -target $(ARCH)-apple-macosx$(DEPLOYMENT_TARGET) \
 		-swift-version 5 -O -whole-module-optimization \
 		-import-objc-header RustBridge/include/bbcat_bridge.h \
-		$(SWIFT_SOURCES) $(RUST_LIB) -framework AppKit -framework UniformTypeIdentifiers \
+		$(SWIFT_SOURCES) $(RUST_LIB) -framework AppKit -framework CoreServices -framework UniformTypeIdentifiers \
 		-o $(APP)/Contents/MacOS/bbcat
 
 $(APP_ICON): Resources/bbcat.svg Scripts/render-icon.swift
