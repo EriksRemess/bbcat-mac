@@ -70,8 +70,7 @@ jobs:
 
           for PLIST in \
             "$APP_PATH/Contents/Info.plist" \
-            "$APP_PATH/Contents/PlugIns/BBCatThumbnail.appex/Contents/Info.plist" \
-            "$APP_PATH/Contents/PlugIns/BBCatPreview.appex/Contents/Info.plist"
+            "$APP_PATH"/Contents/PlugIns/*.appex/Contents/Info.plist
           do
             /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $VERSION" "$PLIST"
             /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $GITHUB_RUN_NUMBER" "$PLIST"
@@ -147,16 +146,14 @@ jobs:
             --keychain "$KEYCHAIN_PATH" \
             --sign "$SIGNING_IDENTITY" \
             "$APP_PATH/Contents/Helpers/bbcat"
-          codesign --force --options runtime --timestamp \
-            --keychain "$KEYCHAIN_PATH" \
-            --entitlements Resources/Thumbnail.entitlements \
-            --sign "$SIGNING_IDENTITY" \
-            "$APP_PATH/Contents/PlugIns/BBCatThumbnail.appex"
-          codesign --force --options runtime --timestamp \
-            --keychain "$KEYCHAIN_PATH" \
-            --entitlements Resources/Thumbnail.entitlements \
-            --sign "$SIGNING_IDENTITY" \
-            "$APP_PATH/Contents/PlugIns/BBCatPreview.appex"
+          for EXTENSION_PATH in "$APP_PATH"/Contents/PlugIns/*.appex
+          do
+            codesign --force --options runtime --timestamp \
+              --keychain "$KEYCHAIN_PATH" \
+              --entitlements Resources/Thumbnail.entitlements \
+              --sign "$SIGNING_IDENTITY" \
+              "$EXTENSION_PATH"
+          done
           codesign --force --options runtime --timestamp \
             --keychain "$KEYCHAIN_PATH" \
             --sign "$SIGNING_IDENTITY" \

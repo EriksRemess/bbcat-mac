@@ -1,6 +1,6 @@
 APP := build/bbcat.app
-EXTENSION := $(APP)/Contents/PlugIns/BBCatThumbnail.appex
 PREVIEW := $(APP)/Contents/PlugIns/BBCatPreview.appex
+THUMBNAIL_BINARY := build/thumbnail/BBCatThumbnail
 RUST_LIB := RustBridge/target/release/libbbcat_bridge.a
 # Keep this pinned to the bbcat version in RustBridge/Cargo.lock.
 BBCAT_CLI_VERSION := 0.5.8
@@ -18,13 +18,15 @@ THIRD_PARTY_LICENSES := Resources/THIRD_PARTY_LICENSES
 ARCH := $(shell uname -m)
 DEPLOYMENT_TARGET := 13.0
 
-.PHONY: all bundle run test clean
+.PHONY: all bundle thumbnail-extensions run test clean
 
 all: bundle
 
-bundle: $(APP)/Contents/MacOS/bbcat $(BUNDLED_CLI) $(APP)/Contents/Resources/bbcat.icns $(APP)/Contents/Resources/BBCAT_LICENSE $(APP)/Contents/Resources/THIRD_PARTY_LICENSES $(EXTENSION)/Contents/MacOS/BBCatThumbnail $(PREVIEW)/Contents/MacOS/BBCatPreview
+bundle: $(APP)/Contents/MacOS/bbcat $(BUNDLED_CLI) $(APP)/Contents/Resources/bbcat.icns $(APP)/Contents/Resources/BBCAT_LICENSE $(APP)/Contents/Resources/THIRD_PARTY_LICENSES thumbnail-extensions $(PREVIEW)/Contents/MacOS/BBCatPreview
 	codesign --force --sign - $(BUNDLED_CLI)
-	codesign --force --sign - --entitlements Resources/Thumbnail.entitlements $(EXTENSION)
+	for extension in $(APP)/Contents/PlugIns/BBCatThumbnail-*.appex; do \
+		codesign --force --sign - --entitlements Resources/Thumbnail.entitlements "$$extension"; \
+	done
 	codesign --force --sign - --entitlements Resources/Thumbnail.entitlements $(PREVIEW)
 	codesign --force --sign - $(APP)
 
@@ -65,15 +67,17 @@ $(APP)/Contents/Resources/BBCAT_LICENSE: $(BBCAT_LICENSE)
 	mkdir -p $(APP)/Contents/Resources
 	cp $(BBCAT_LICENSE) $@
 
-$(EXTENSION)/Contents/MacOS/BBCatThumbnail: Makefile $(RUST_LIB) $(THUMBNAIL_SOURCES) Resources/ThumbnailInfo.plist
-	mkdir -p $(EXTENSION)/Contents/MacOS
-	cp Resources/ThumbnailInfo.plist $(EXTENSION)/Contents/Info.plist
+$(THUMBNAIL_BINARY): Makefile $(RUST_LIB) $(THUMBNAIL_SOURCES)
+	mkdir -p $(dir $(THUMBNAIL_BINARY))
 	CLANG_MODULE_CACHE_PATH=$(CURDIR)/build/ModuleCache \
 	swiftc -module-cache-path $(CURDIR)/build/ModuleCache -target $(ARCH)-apple-macosx$(DEPLOYMENT_TARGET) \
 		-swift-version 5 -O -whole-module-optimization -parse-as-library -application-extension \
 		-module-name BBCatThumbnail -import-objc-header RustBridge/include/bbcat_bridge.h \
 		$(THUMBNAIL_SOURCES) $(RUST_LIB) -framework AppKit -framework QuickLookThumbnailing \
-		-Xlinker -e -Xlinker _NSExtensionMain -o $(EXTENSION)/Contents/MacOS/BBCatThumbnail
+		-Xlinker -e -Xlinker _NSExtensionMain -o $(THUMBNAIL_BINARY)
+
+thumbnail-extensions: $(THUMBNAIL_BINARY) Resources/ThumbnailInfo.plist Scripts/install-thumbnail-extensions.sh
+	bash Scripts/install-thumbnail-extensions.sh $(APP) $(THUMBNAIL_BINARY) Resources/ThumbnailInfo.plist
 
 $(PREVIEW)/Contents/MacOS/BBCatPreview: Makefile $(RUST_LIB) $(PREVIEW_SOURCES) Resources/PreviewInfo.plist
 	mkdir -p $(PREVIEW)/Contents/MacOS
