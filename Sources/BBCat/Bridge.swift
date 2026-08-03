@@ -32,6 +32,7 @@ enum BBCatWelcome {
 final class BBCatDocument {
     private let handle: OpaquePointer
     let frameCount: Int
+    let isAnimated: Bool
     let displayTitle: String
 
     init(url: URL) throws {
@@ -40,6 +41,7 @@ final class BBCatDocument {
         }
         self.handle = handle
         frameCount = Int(bbcat_document_frame_count(handle))
+        isAnimated = bbcat_document_is_animated(handle) != 0
         let fallback = url.lastPathComponent.isEmpty ? "ANSI art" : url.lastPathComponent
         displayTitle = fallback.withCString { fallbackPointer in
             guard let title = bbcat_document_display_title(handle, fallbackPointer) else { return fallback }

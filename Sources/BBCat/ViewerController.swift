@@ -100,7 +100,7 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
         artworkView.image = rendered.image
         configureLayout(for: rendered.image.size, resizeWindow: resizeWindow)
 
-        guard artworkDocument.frameCount > 1 else { return }
+        guard artworkDocument.isAnimated else { return }
         let delay = max(rendered.duration, 0.001)
         frameIndex = (frameIndex + 1) % artworkDocument.frameCount
         DispatchQueue.main.asyncAfter(deadline: .now() + delay) { [weak self] in

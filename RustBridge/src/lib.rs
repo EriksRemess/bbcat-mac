@@ -14,6 +14,7 @@ thread_local! {
 
 pub struct BbcatDocument {
     document: bbcat::Document,
+    info: bbcat::DocumentInfo,
 }
 
 #[repr(C)]
@@ -78,7 +79,8 @@ pub extern "C" fn bbcat_document_open(path: *const c_char) -> *mut BbcatDocument
             },
         )
         .map_err(|error| error.to_string())?;
-        Ok::<_, String>(Box::into_raw(Box::new(BbcatDocument { document })))
+        let info = document.info();
+        Ok::<_, String>(Box::into_raw(Box::new(BbcatDocument { document, info })))
     })();
     match result {
         Ok(document) => document,
@@ -116,11 +118,22 @@ pub unsafe extern "C" fn bbcat_document_frame_count(document: *const BbcatDocume
         return 0;
     }
     // SAFETY: A non-null document pointer is owned by the caller for this call.
-    let document = unsafe { &(*document).document };
-    document
-        .animation
-        .as_ref()
-        .map_or(1, |animation| animation.frames.len().max(1))
+    unsafe { (*document).info.frame_count.max(1) }
+}
+
+#[unsafe(no_mangle)]
+/// Returns whether decoding identified animation frames.
+///
+/// # Safety
+///
+/// `document` must be null or a live pointer returned by
+/// [`bbcat_document_open`].
+pub unsafe extern "C" fn bbcat_document_is_animated(document: *const BbcatDocument) -> i32 {
+    if document.is_null() {
+        return 0;
+    }
+    // SAFETY: A non-null document pointer is owned by the caller for this call.
+    i32::from(unsafe { (*document).document.is_animated() })
 }
 
 #[unsafe(no_mangle)]
@@ -141,8 +154,8 @@ pub unsafe extern "C" fn bbcat_document_display_title(
     }
     let fallback = input_string(fallback, "fallback").unwrap_or("ANSI art");
     // SAFETY: A non-null document pointer is owned by the caller for this call.
-    let document = unsafe { &(*document).document };
-    let (title, details) = document.sauce.as_ref().map_or_else(
+    let document = unsafe { &*document };
+    let (title, details) = document.info.sauce.as_ref().map_or_else(
         || (fallback.to_owned(), Vec::new()),
         |sauce| {
             let title = non_empty(&sauce.title).unwrap_or(fallback).to_owned();

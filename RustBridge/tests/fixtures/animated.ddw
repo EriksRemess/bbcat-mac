@@ -1,0 +1,5 @@
+{"type":"Dimensions","text":"1x1","frame":"SAUCE_record"}
+{"id":"1","type":"frame","duration_ms":25}
+{"id":"2","type":"frame","duration_ms":50}
+{"x":0,"y":0,"text":"A","color":"15","frame":"1"}
+{"x":0,"y":0,"text":"B","color":"15","frame":"2"}

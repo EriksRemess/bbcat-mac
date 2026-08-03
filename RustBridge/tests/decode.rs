@@ -10,6 +10,10 @@ fn decodes_and_renders_ansi_through_the_c_api() {
         unsafe { bbcat_bridge::bbcat_document_frame_count(document) },
         1
     );
+    assert_eq!(
+        unsafe { bbcat_bridge::bbcat_document_is_animated(document) },
+        0
+    );
 
     let mut frame = bbcat_bridge::BbcatFrame {
         data: std::ptr::null_mut(),
@@ -43,6 +47,24 @@ fn decodes_and_renders_ansi_through_the_c_api() {
         bbcat_bridge::bbcat_bytes_free(thumbnail.data, thumbnail.length);
         bbcat_bridge::bbcat_document_free(document);
     }
+}
+
+#[test]
+fn reports_animation_info_through_the_c_api() {
+    let path = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/fixtures/animated.ddw");
+    let path = CString::new(path.to_string_lossy().as_bytes()).unwrap();
+    let document = bbcat_bridge::bbcat_document_open(path.as_ptr());
+    assert!(!document.is_null());
+    assert_eq!(
+        unsafe { bbcat_bridge::bbcat_document_is_animated(document) },
+        1
+    );
+    assert_eq!(
+        unsafe { bbcat_bridge::bbcat_document_frame_count(document) },
+        2
+    );
+
+    unsafe { bbcat_bridge::bbcat_document_free(document) };
 }
 
 #[test]
