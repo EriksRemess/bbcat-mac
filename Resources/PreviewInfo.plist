@@ -19,8 +19,8 @@
         <dict>
             <key>QLSupportedContentTypes</key>
             <array>
-                <string>dev.bbcat.ansi-art</string>
-                <string>dev.bbcat.ansi-ascii</string>
+                <string>dev.bbcat.ansi</string>
+                <string>dev.bbcat.ascii</string>
                 <string>dev.bbcat.diz</string>
                 <string>dev.bbcat.nfo</string>
                 <string>dev.bbcat.darkdraw</string>

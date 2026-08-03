@@ -1,4 +1,8 @@
-use std::{ffi::CString, path::PathBuf};
+use std::{
+    ffi::{CStr, CString},
+    mem::MaybeUninit,
+    path::PathBuf,
+};
 
 #[test]
 fn decodes_and_renders_ansi_through_the_c_api() {
@@ -68,7 +72,27 @@ fn reports_animation_info_through_the_c_api() {
         2
     );
 
-    unsafe { bbcat_bridge::bbcat_document_free(document) };
+    let mut info = MaybeUninit::<bbcat_bridge::BbcatDocumentInfo>::uninit();
+    assert_eq!(
+        unsafe { bbcat_bridge::bbcat_document_copy_info(document, info.as_mut_ptr()) },
+        1
+    );
+    let info = unsafe { info.assume_init() };
+    assert_eq!((info.columns, info.rows), (1, 1));
+    assert_eq!(info.animated, 1);
+    assert_eq!(info.frame_count, 2);
+
+    let format = unsafe { bbcat_bridge::bbcat_document_copy_metadata_string(document, 0) };
+    assert!(!format.is_null());
+    assert_eq!(
+        unsafe { CStr::from_ptr(format) }.to_str().unwrap(),
+        "DarkDraw DDW"
+    );
+
+    unsafe {
+        bbcat_bridge::bbcat_string_free(format);
+        bbcat_bridge::bbcat_document_free(document);
+    }
 }
 
 #[test]

@@ -29,6 +29,32 @@ pub struct BbcatFrame {
     pub duration_ns: u64,
 }
 
+#[repr(C)]
+pub struct BbcatDocumentInfo {
+    pub columns: usize,
+    pub rows: usize,
+    pub pixel_width: usize,
+    pub pixel_height: usize,
+    pub glyph_width: usize,
+    pub glyph_height: usize,
+    pub frame_count: usize,
+    pub has_pixel_dimensions: i32,
+    pub raster: i32,
+    pub utf8_supported: i32,
+    pub embedded_font: i32,
+    pub animated: i32,
+    pub has_sauce: i32,
+    pub sauce_ice_colors: i32,
+    pub sauce_letter_spacing: i32,
+}
+
+const METADATA_FORMAT: i32 = 0;
+const METADATA_TITLE: i32 = 1;
+const METADATA_AUTHOR: i32 = 2;
+const METADATA_GROUP: i32 = 3;
+const METADATA_DATE: i32 = 4;
+const METADATA_FONT_NAME: i32 = 5;
+
 fn set_error(error: impl ToString) {
     LAST_ERROR.with(|slot| *slot.borrow_mut() = Some(error.to_string()));
 }
@@ -139,6 +165,109 @@ pub unsafe extern "C" fn bbcat_document_is_animated(document: *const BbcatDocume
     }
     // SAFETY: A non-null document pointer is owned by the caller for this call.
     i32::from(unsafe { (*document).document.is_animated() })
+}
+
+#[unsafe(no_mangle)]
+/// Copies decoded document properties into caller-owned storage.
+///
+/// # Safety
+///
+/// `document` must point to a live document and `info` must point to writable
+/// storage for the duration of the call.
+pub unsafe extern "C" fn bbcat_document_copy_info(
+    document: *const BbcatDocument,
+    info: *mut BbcatDocumentInfo,
+) -> i32 {
+    if document.is_null() || info.is_null() {
+        set_error("document or info was null");
+        return 0;
+    }
+    // SAFETY: Both non-null pointers are owned by the caller for this call.
+    let source = unsafe { &(*document).info };
+    let (pixel_width, pixel_height, has_pixel_dimensions) = source
+        .pixel_dimensions
+        .map_or((0, 0, 0), |(width, height)| (width, height, 1));
+    let (sauce_ice_colors, sauce_letter_spacing) = source.sauce.as_ref().map_or((0, 0), |sauce| {
+        let spacing = match sauce.letter_spacing {
+            Some(bbcat::LetterSpacing::EightPixels) => 8,
+            Some(bbcat::LetterSpacing::NinePixels) => 9,
+            None => 0,
+        };
+        (i32::from(sauce.ice_colors), spacing)
+    });
+    let (glyph_width, glyph_height) = source.glyph_dimensions;
+    // SAFETY: `info` points to writable storage supplied by the caller.
+    unsafe {
+        *info = BbcatDocumentInfo {
+            columns: source.columns,
+            rows: source.rows,
+            pixel_width,
+            pixel_height,
+            glyph_width,
+            glyph_height,
+            frame_count: source.frame_count,
+            has_pixel_dimensions,
+            raster: i32::from(source.raster),
+            utf8_supported: i32::from(source.utf8_supported),
+            embedded_font: i32::from(source.embedded_font),
+            animated: i32::from(source.animated),
+            has_sauce: i32::from(source.sauce.is_some()),
+            sauce_ice_colors,
+            sauce_letter_spacing,
+        };
+    }
+    1
+}
+
+#[unsafe(no_mangle)]
+/// Copies one decoded document metadata string.
+///
+/// An unavailable or empty value is returned as null. A non-null string must
+/// be released with [`bbcat_string_free`].
+///
+/// # Safety
+///
+/// `document` must point to a live document for the duration of the call.
+pub unsafe extern "C" fn bbcat_document_copy_metadata_string(
+    document: *const BbcatDocument,
+    field: i32,
+) -> *mut c_char {
+    if document.is_null() {
+        set_error("document was null");
+        return ptr::null_mut();
+    }
+    // SAFETY: A non-null document pointer is owned by the caller for this call.
+    let info = unsafe { &(*document).info };
+    let value = match field {
+        METADATA_FORMAT => Some(info.format.to_string()),
+        METADATA_TITLE => info
+            .sauce
+            .as_ref()
+            .and_then(|sauce| non_empty(&sauce.title))
+            .map(str::to_owned),
+        METADATA_AUTHOR => info
+            .sauce
+            .as_ref()
+            .and_then(|sauce| non_empty(&sauce.author))
+            .map(str::to_owned),
+        METADATA_GROUP => info
+            .sauce
+            .as_ref()
+            .and_then(|sauce| non_empty(&sauce.group))
+            .map(str::to_owned),
+        METADATA_DATE => info
+            .sauce
+            .as_ref()
+            .and_then(|sauce| non_empty(&sauce.date))
+            .map(str::to_owned),
+        METADATA_FONT_NAME => info
+            .sauce
+            .as_ref()
+            .and_then(|sauce| non_empty(&sauce.font_name))
+            .map(str::to_owned),
+        _ => None,
+    };
+    value.map_or(ptr::null_mut(), c_string)
 }
 
 #[unsafe(no_mangle)]

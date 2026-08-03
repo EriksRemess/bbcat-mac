@@ -13,8 +13,7 @@ info_plist="$3"
 plugins_path="$app_path/Contents/PlugIns"
 
 thumbnail_types=(
-    "ansi-art dev.bbcat.ansi-art bbcat — ANSI (.ans) thumbnails"
-    "ansi-ascii dev.bbcat.ansi-ascii bbcat — ASCII (.asc) thumbnails"
+    "ansi dev.bbcat.ansi bbcat — ANSI (.ans) thumbnails"
     "diz dev.bbcat.diz bbcat — DIZ (.diz) thumbnails"
     "nfo dev.bbcat.nfo bbcat — NFO (.nfo) thumbnails"
     "darkdraw dev.bbcat.darkdraw bbcat — DarkDraw (.ddw) thumbnails"
@@ -24,7 +23,10 @@ thumbnail_types=(
 )
 
 mkdir -p "$plugins_path"
-rm -rf "$plugins_path/BBCatThumbnail.appex" "$plugins_path"/BBCatThumbnail-*.appex
+rm -rf \
+    "$plugins_path/BBCatThumbnail.appex" \
+    "$plugins_path"/BBCatThumbnail-*.appex \
+    "$plugins_path"/bbcatThumbnail-*.appex
 
 for thumbnail_type in "${thumbnail_types[@]}"; do
     read -r suffix uti display_name <<< "$thumbnail_type"

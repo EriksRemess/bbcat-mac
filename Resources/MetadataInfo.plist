@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleExecutable</key><string>bbcatMetadata</string>
+    <key>CFBundleIdentifier</key><string>dev.bbcat.mac.spotlight</string>
+    <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
+    <key>CFBundleName</key><string>bbcat metadata importer</string>
+    <key>CFBundlePackageType</key><string>BNDL</string>
+    <key>CFBundleSupportedPlatforms</key><array><string>MacOSX</string></array>
+    <key>CFBundleShortVersionString</key><string>0.1.1</string>
+    <key>CFBundleVersion</key><string>1</string>
+    <key>LSMinimumSystemVersion</key><string>13.0</string>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeRole</key><string>MDImporter</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>dev.bbcat.ansi</string>
+                <string>dev.bbcat.ascii</string>
+                <string>dev.bbcat.ansi-art</string>
+                <string>dev.bbcat.ansi-ascii</string>
+                <string>dev.bbcat.diz</string>
+                <string>dev.bbcat.nfo</string>
+                <string>dev.bbcat.darkdraw</string>
+                <string>dev.bbcat.artworx</string>
+                <string>dev.bbcat.ripscrip</string>
+                <string>dev.bbcat.xbin</string>
+            </array>
+        </dict>
+    </array>
+    <key>CFPlugInDynamicRegisterFunction</key><string></string>
+    <key>CFPlugInDynamicRegistration</key><string>NO</string>
+    <key>CFPlugInFactories</key>
+    <dict>
+        <key>36B40F05-4408-4A7B-8AFD-C6CF9430C996</key>
+        <string>MetadataImporterPluginFactory</string>
+    </dict>
+    <key>CFPlugInTypes</key>
+    <dict>
+        <key>8B08C4BF-415B-11D8-B3F9-0003936726FC</key>
+        <array><string>36B40F05-4408-4A7B-8AFD-C6CF9430C996</string></array>
+    </dict>
+    <key>CFPlugInUnloadFunction</key><string></string>
+</dict>
+</plist>

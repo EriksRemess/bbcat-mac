@@ -1,0 +1,15 @@
+"dev_bbcat_format" = "Format";
+"dev_bbcat_columns" = "Columns";
+"dev_bbcat_rows" = "Rows";
+"dev_bbcat_character_grid" = "Character grid";
+"dev_bbcat_glyph_width" = "Glyph width";
+"dev_bbcat_glyph_height" = "Glyph height";
+"dev_bbcat_raster" = "Raster artwork";
+"dev_bbcat_utf8_supported" = "UTF-8 export";
+"dev_bbcat_embedded_font" = "Embedded font";
+"dev_bbcat_animated" = "Animated";
+"dev_bbcat_frame_count" = "Frames";
+"dev_bbcat_group" = "Art group";
+"dev_bbcat_font_name" = "Font";
+"dev_bbcat_ice_colors" = "iCE colors";
+"dev_bbcat_letter_spacing" = "Character spacing";

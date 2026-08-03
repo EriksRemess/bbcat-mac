@@ -17,6 +17,8 @@ C-compatible bridge.
 - Fit-width display with vertical scrolling for artwork larger than the available screen
 - Format-specific, cropped Finder thumbnails with extension badges
 - Full, uncropped Quick Look previews with the Space bar
+- Finder and Spotlight metadata for format, dimensions, SAUCE credits, fonts,
+  and animation details
 - Optional bundled `bbcat` CLI, installed or removed from the app menu as
   `~/.local/bin/bbcat`
 
@@ -41,6 +43,7 @@ providers, and Quick Look preview provider.
 - [`Sources/bbcatThumbnail`](Sources/bbcatThumbnail): renderer shared by the
   format-specific Finder thumbnail extensions
 - [`Sources/bbcatPreview`](Sources/bbcatPreview): Quick Look previews
+- [`Sources/bbcatMetadata`](Sources/bbcatMetadata): Spotlight metadata importer
 - [`RustBridge`](RustBridge): Rust decoder and rendering bridge
 
 The project is available under the [MIT License](LICENSE).
