@@ -14,7 +14,7 @@ C-compatible bridge.
 - Static artwork and timed ANSI animation playback
 - SAUCE titles, authors, and dates in the window title
 - Crisp ×1 and ×2 rendering with responsive aspect-fit display
-- Native-size scrolling for artwork larger than the available screen
+- Fit-width display with vertical scrolling for artwork larger than the available screen
 - Format-specific, cropped Finder thumbnails with extension badges
 - Full, uncropped Quick Look previews with the Space bar
 - Optional bundled `bbcat` CLI, installed or removed from the app menu as
@@ -37,10 +37,10 @@ implemented in Swift with AppKit. The Rust bridge wraps the `bbcat` rendering
 library behind a small C-compatible API shared by the app, Finder thumbnail
 providers, and Quick Look preview provider.
 
-- [`Sources/BBCat`](Sources/BBCat): application and artwork viewer
-- [`Sources/BBCatThumbnail`](Sources/BBCatThumbnail): renderer shared by the
+- [`Sources/bbcat`](Sources/bbcat): application and artwork viewer
+- [`Sources/bbcatThumbnail`](Sources/bbcatThumbnail): renderer shared by the
   format-specific Finder thumbnail extensions
-- [`Sources/BBCatPreview`](Sources/BBCatPreview): Quick Look previews
+- [`Sources/bbcatPreview`](Sources/bbcatPreview): Quick Look previews
 - [`RustBridge`](RustBridge): Rust decoder and rendering bridge
 
 The project is available under the [MIT License](LICENSE).

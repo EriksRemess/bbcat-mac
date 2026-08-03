@@ -24,12 +24,12 @@ thumbnail_types=(
 )
 
 mkdir -p "$plugins_path"
-rm -rf "$plugins_path/BBCatThumbnail.appex"
+rm -rf "$plugins_path/BBCatThumbnail.appex" "$plugins_path"/BBCatThumbnail-*.appex
 
 for thumbnail_type in "${thumbnail_types[@]}"; do
     read -r suffix uti display_name <<< "$thumbnail_type"
-    extension_path="$plugins_path/BBCatThumbnail-$suffix.appex"
-    executable_path="$extension_path/Contents/MacOS/BBCatThumbnail"
+    extension_path="$plugins_path/bbcatThumbnail-$suffix.appex"
+    executable_path="$extension_path/Contents/MacOS/bbcatThumbnail"
     extension_plist="$extension_path/Contents/Info.plist"
 
     rm -rf "$extension_path"

@@ -4,11 +4,11 @@ import UniformTypeIdentifiers
 final class ViewerController: NSWindowController, NSWindowDelegate {
     private let artworkView = ArtworkView(frame: .zero)
     private let scrollView = NSScrollView(frame: .zero)
-    private var artworkDocument: BBCatDocument?
+    private var artworkDocument: bbcatDocument?
     private var scale = 1
+    private var supportsTwoX = false
     private var frameIndex = 0
     private var playbackGeneration = 0
-    private var nativeSizeMode = false
 
     init() {
         let window = NSWindow(
@@ -19,7 +19,7 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
         )
         super.init(window: window)
         window.title = "bbcat"
-        window.minSize = NSSize(width: 320, height: 240)
+        window.minSize = NSSize(width: 400, height: 240)
         window.center()
         window.delegate = self
         configureContent()
@@ -43,7 +43,7 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
     }
 
     private func configureToolbar() {
-        let toolbar = NSToolbar(identifier: "BBCatToolbar")
+        let toolbar = NSToolbar(identifier: "bbcatToolbar")
         toolbar.displayMode = .iconOnly
         toolbar.delegate = self
         window?.toolbar = toolbar
@@ -51,7 +51,7 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
     }
 
     private func showWelcomeArtwork() {
-        artworkView.image = try? BBCatWelcome.image(scale: 1)
+        artworkView.image = try? bbcatWelcome.image(scale: 1)
         artworkView.maximumFitScale = 2
         artworkView.setAccessibilityLabel("Open an artwork to view it")
     }
@@ -59,8 +59,9 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
     func open(_ url: URL) {
         playbackGeneration &+= 1
         do {
-            let loaded = try BBCatDocument(url: url)
+            let loaded = try bbcatDocument(url: url)
             artworkDocument = loaded
+            updateScaleControl(for: loaded)
             artworkView.maximumFitScale = nil
             frameIndex = 0
             window?.title = loaded.displayTitle
@@ -87,11 +88,41 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
     @objc private func changeScale(_ sender: NSSegmentedControl) {
         let newScale = sender.selectedSegment + 1
         guard newScale != scale else { return }
+        let previousScale = scale
         scale = newScale
         playbackGeneration &+= 1
         frameIndex = 0
-        do { try displayFrame(generation: playbackGeneration, resizeWindow: true) }
-        catch { present(error) }
+        do {
+            try displayFrame(generation: playbackGeneration, resizeWindow: true)
+        } catch {
+            scale = previousScale
+            sender.selectedSegment = previousScale - 1
+            present(error)
+        }
+    }
+
+    private func updateScaleControl(for document: bbcatDocument?) {
+        supportsTwoX = document?.supports(scale: 2) == true
+        if !supportsTwoX {
+            scale = 1
+        }
+        guard let toolbar = window?.toolbar else { return }
+        for item in toolbar.items where item.itemIdentifier == Self.scaleIdentifier {
+            item.isEnabled = supportsTwoX
+            if let control = item.view as? NSSegmentedControl {
+                configureScaleControl(control)
+            }
+        }
+    }
+
+    private func configureScaleControl(_ control: NSSegmentedControl) {
+        control.selectedSegment = scale - 1
+        control.isEnabled = supportsTwoX
+        control.toolTip = switch (artworkDocument, supportsTwoX) {
+        case (nil, _): "Open an artwork to change its rendering scale"
+        case (_, true): "Rendering scale"
+        case (_, false): "2x rendering exceeds the canvas pixel safety limit"
+        }
     }
 
     private func displayFrame(generation: Int, resizeWindow: Bool) throws {
@@ -114,30 +145,51 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
         let visible = window?.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1200, height: 800)
         let maxWidth = floor(visible.width * 0.9)
         let maxHeight = floor(visible.height * 0.9)
-        nativeSizeMode = imageSize.width > maxWidth || imageSize.height > maxHeight
-        artworkView.fitsImage = !nativeSizeMode
-        scrollView.hasHorizontalScroller = nativeSizeMode && imageSize.width > scrollView.contentSize.width
-        scrollView.hasVerticalScroller = nativeSizeMode && imageSize.height > scrollView.contentSize.height
-
-        if nativeSizeMode {
-            artworkView.autoresizingMask = []
-            artworkView.frame = NSRect(origin: .zero, size: NSSize(
-                width: max(imageSize.width, scrollView.contentSize.width),
-                height: max(imageSize.height, scrollView.contentSize.height)
-            ))
-        } else {
-            artworkView.autoresizingMask = [.width, .height]
-            artworkView.frame = NSRect(origin: .zero, size: scrollView.contentSize)
-        }
+        let fitWidth = imageSize.width > maxWidth || imageSize.height > maxHeight
 
         if resizeWindow {
             let contentSize = NSSize(
-                width: min(max(imageSize.width, 320), maxWidth),
+                width: min(max(imageSize.width, 400), maxWidth),
                 height: min(max(imageSize.height, 200), maxHeight)
             )
             window?.setContentSize(contentSize)
             window?.center()
         }
+
+        if fitWidth {
+            configureFitWidthLayout(for: imageSize)
+            if resizeWindow {
+                scrollView.contentView.scroll(to: .zero)
+                scrollView.reflectScrolledClipView(scrollView.contentView)
+            }
+        } else {
+            scrollView.hasHorizontalScroller = false
+            scrollView.hasVerticalScroller = false
+            artworkView.fitsImage = true
+            artworkView.autoresizingMask = [.width, .height]
+            artworkView.frame = NSRect(origin: .zero, size: scrollView.contentSize)
+        }
+    }
+
+    private func configureFitWidthLayout(for imageSize: NSSize) {
+        scrollView.hasHorizontalScroller = false
+        scrollView.hasVerticalScroller = false
+        artworkView.fitsImage = true
+        artworkView.autoresizingMask = []
+
+        let fullViewport = scrollView.contentSize
+        let fullWidthHeight = fullViewport.width * imageSize.height / max(imageSize.width, 1)
+        scrollView.hasVerticalScroller = fullWidthHeight > fullViewport.height
+
+        // A non-overlay scroller narrows the viewport, so calculate once more using
+        // the final content width. The document always matches that width and can
+        // therefore only scroll vertically, just like the iOS viewer.
+        let viewport = scrollView.contentSize
+        let fittedHeight = viewport.width * imageSize.height / max(imageSize.width, 1)
+        artworkView.frame = NSRect(
+            origin: .zero,
+            size: NSSize(width: viewport.width, height: max(ceil(fittedHeight), viewport.height))
+        )
     }
 
     func windowDidResize(_ notification: Notification) {
@@ -174,13 +226,16 @@ extension ViewerController: NSToolbarDelegate {
             item.image = NSImage(systemSymbolName: "folder", accessibilityDescription: "Open")
             item.target = self
             item.action = #selector(chooseFile)
+            item.visibilityPriority = .high
         } else if identifier == Self.scaleIdentifier {
             let control = NSSegmentedControl(labels: ["×1", "×2"], trackingMode: .selectOne,
                                              target: self, action: #selector(changeScale(_:)))
-            control.selectedSegment = scale - 1
             control.setAccessibilityLabel("Rendering scale")
+            configureScaleControl(control)
             item.label = "Scale"
             item.view = control
+            item.isEnabled = supportsTwoX
+            item.visibilityPriority = .high
         } else { return nil }
         return item
     }

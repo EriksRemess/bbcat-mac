@@ -14,6 +14,10 @@ fn decodes_and_renders_ansi_through_the_c_api() {
         unsafe { bbcat_bridge::bbcat_document_is_animated(document) },
         0
     );
+    assert_eq!(
+        unsafe { bbcat_bridge::bbcat_document_supports_scale(document, 2) },
+        1
+    );
 
     let mut frame = bbcat_bridge::BbcatFrame {
         data: std::ptr::null_mut(),

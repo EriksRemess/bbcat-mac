@@ -1,35 +1,35 @@
 import AppKit
 
-enum BBCatError: LocalizedError {
+enum bbcatError: LocalizedError {
     case message(String)
 
     var errorDescription: String? {
         switch self { case .message(let message): message }
     }
 
-    static func last(_ fallback: String) -> BBCatError {
+    static func last(_ fallback: String) -> bbcatError {
         guard let pointer = bbcat_take_last_error() else { return .message(fallback) }
         defer { bbcat_string_free(pointer) }
         return .message(String(cString: pointer))
     }
 }
 
-enum BBCatWelcome {
+enum bbcatWelcome {
     static func image(scale: Int) throws -> NSImage {
         var frame = BbcatFrame(data: nil, length: 0, duration_ns: 0)
         guard bbcat_render_welcome(scale, &frame) != 0, let bytes = frame.data else {
-            throw BBCatError.last("Could not render the welcome artwork")
+            throw bbcatError.last("Could not render the welcome artwork")
         }
         defer { bbcat_bytes_free(bytes, frame.length) }
         let data = Data(bytes: bytes, count: frame.length)
         guard let image = NSImage(data: data) else {
-            throw BBCatError.message("The renderer returned an invalid welcome image")
+            throw bbcatError.message("The renderer returned an invalid welcome image")
         }
         return image
     }
 }
 
-final class BBCatDocument {
+final class bbcatDocument {
     private let handle: OpaquePointer
     let frameCount: Int
     let isAnimated: Bool
@@ -37,7 +37,7 @@ final class BBCatDocument {
 
     init(url: URL) throws {
         guard let handle = url.path.withCString({ bbcat_document_open($0) }) else {
-            throw BBCatError.last("Could not decode the file")
+            throw bbcatError.last("Could not decode the file")
         }
         self.handle = handle
         frameCount = Int(bbcat_document_frame_count(handle))
@@ -52,16 +52,20 @@ final class BBCatDocument {
 
     deinit { bbcat_document_free(handle) }
 
+    func supports(scale: Int) -> Bool {
+        scale > 0 && bbcat_document_supports_scale(handle, scale) != 0
+    }
+
     func frame(at index: Int, scale: Int) throws -> (image: NSImage, duration: TimeInterval) {
         var frame = BbcatFrame(data: nil, length: 0, duration_ns: 0)
         guard bbcat_document_render_frame(handle, index, scale, &frame) != 0,
               let bytes = frame.data else {
-            throw BBCatError.last("Could not render the artwork")
+            throw bbcatError.last("Could not render the artwork")
         }
         defer { bbcat_bytes_free(bytes, frame.length) }
         let data = Data(bytes: bytes, count: frame.length)
         guard let image = NSImage(data: data) else {
-            throw BBCatError.message("The renderer returned an invalid image")
+            throw bbcatError.message("The renderer returned an invalid image")
         }
         return (image, TimeInterval(frame.duration_ns) / 1_000_000_000)
     }

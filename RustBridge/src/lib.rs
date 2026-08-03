@@ -12,6 +12,11 @@ thread_local! {
     static LAST_ERROR: RefCell<Option<String>> = const { RefCell::new(None) };
 }
 
+// Keep this in sync with bbcat's PNG encoder safety limit. The dependency is
+// pinned in Cargo.lock, and checking it here avoids allocating a second, very
+// large PNG merely to determine whether the UI should offer 2x rendering.
+const MAX_PNG_PIXELS: usize = 100_000_000;
+
 pub struct BbcatDocument {
     document: bbcat::Document,
     info: bbcat::DocumentInfo,
@@ -134,6 +139,39 @@ pub unsafe extern "C" fn bbcat_document_is_animated(document: *const BbcatDocume
     }
     // SAFETY: A non-null document pointer is owned by the caller for this call.
     i32::from(unsafe { (*document).document.is_animated() })
+}
+
+#[unsafe(no_mangle)]
+/// Returns whether the document's canvas can be rendered at `scale` without
+/// exceeding bbcat's PNG pixel safety limit.
+///
+/// # Safety
+///
+/// `document` must be null or a live pointer returned by
+/// [`bbcat_document_open`].
+pub unsafe extern "C" fn bbcat_document_supports_scale(
+    document: *const BbcatDocument,
+    scale: usize,
+) -> i32 {
+    if document.is_null() || scale == 0 {
+        return 0;
+    }
+    // SAFETY: A non-null document pointer is owned by the caller for this call.
+    let dimensions = unsafe { (*document).info.pixel_dimensions };
+    i32::from(dimensions_support_scale(dimensions, scale))
+}
+
+fn dimensions_support_scale(dimensions: Option<(usize, usize)>, scale: usize) -> bool {
+    dimensions.is_some_and(|(width, height)| {
+        width
+            .checked_mul(scale)
+            .and_then(|width| {
+                height
+                    .checked_mul(scale)
+                    .and_then(|height| width.checked_mul(height))
+            })
+            .is_some_and(|pixels| pixels <= MAX_PNG_PIXELS)
+    })
 }
 
 #[unsafe(no_mangle)]
@@ -359,11 +397,19 @@ pub unsafe extern "C" fn bbcat_bytes_free(data: *mut u8, length: usize) {
 
 #[cfg(test)]
 mod tests {
-    use super::format_sauce_date;
+    use super::{dimensions_support_scale, format_sauce_date};
 
     #[test]
     fn formats_sauce_dates() {
         assert_eq!(format_sauce_date("20260720"), "2026-07-20");
         assert_eq!(format_sauce_date("unknown"), "unknown");
+    }
+
+    #[test]
+    fn checks_scaled_canvas_against_png_safety_limit() {
+        assert!(dimensions_support_scale(Some((5_000, 5_000)), 2));
+        assert!(!dimensions_support_scale(Some((5_001, 5_000)), 2));
+        assert!(!dimensions_support_scale(Some((usize::MAX, 1)), 2));
+        assert!(!dimensions_support_scale(None, 2));
     }
 }

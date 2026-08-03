@@ -1,17 +1,17 @@
 APP := build/bbcat.app
-PREVIEW := $(APP)/Contents/PlugIns/BBCatPreview.appex
-THUMBNAIL_BINARY := build/thumbnail/BBCatThumbnail
+PREVIEW := $(APP)/Contents/PlugIns/bbcatPreview.appex
+THUMBNAIL_BINARY := build/thumbnail/bbcatThumbnail
 RUST_LIB := RustBridge/target/release/libbbcat_bridge.a
 # Keep this pinned to the bbcat version in RustBridge/Cargo.lock.
-BBCAT_CLI_VERSION := 0.5.10
+BBCAT_CLI_VERSION := 0.5.11
 CLI_INSTALL_ROOT := build/bbcat-cli
 CLI_TARGET_DIR := build/bbcat-cli-target
 CLI_BINARY := $(CLI_INSTALL_ROOT)/bin/bbcat
 BUNDLED_CLI := $(APP)/Contents/Helpers/bbcat
 SWIFT_TEST_BINARY := build/tests/command-line-tool-installer-tests
-SWIFT_SOURCES := $(wildcard Sources/BBCat/*.swift)
-THUMBNAIL_SOURCES := $(wildcard Sources/BBCatThumbnail/*.swift)
-PREVIEW_SOURCES := $(wildcard Sources/BBCatPreview/*.swift) Sources/BBCat/ArtworkView.swift Sources/BBCat/Bridge.swift
+SWIFT_SOURCES := $(wildcard Sources/bbcat/*.swift)
+THUMBNAIL_SOURCES := $(wildcard Sources/bbcatThumbnail/*.swift)
+PREVIEW_SOURCES := $(wildcard Sources/bbcatPreview/*.swift) Sources/bbcat/ArtworkView.swift Sources/bbcat/Bridge.swift
 APP_ICON := Resources/bbcat.icns
 BBCAT_LICENSE := Resources/BBCAT_LICENSE
 THIRD_PARTY_LICENSES := Resources/THIRD_PARTY_LICENSES
@@ -22,9 +22,9 @@ DEPLOYMENT_TARGET := 13.0
 
 all: bundle
 
-bundle: $(APP)/Contents/MacOS/bbcat $(BUNDLED_CLI) $(APP)/Contents/Resources/bbcat.icns $(APP)/Contents/Resources/BBCAT_LICENSE $(APP)/Contents/Resources/THIRD_PARTY_LICENSES thumbnail-extensions $(PREVIEW)/Contents/MacOS/BBCatPreview
+bundle: $(APP)/Contents/MacOS/bbcat $(BUNDLED_CLI) $(APP)/Contents/Resources/bbcat.icns $(APP)/Contents/Resources/BBCAT_LICENSE $(APP)/Contents/Resources/THIRD_PARTY_LICENSES thumbnail-extensions $(PREVIEW)/Contents/MacOS/bbcatPreview
 	codesign --force --sign - $(BUNDLED_CLI)
-	for extension in $(APP)/Contents/PlugIns/BBCatThumbnail-*.appex; do \
+	for extension in $(APP)/Contents/PlugIns/bbcatThumbnail-*.appex; do \
 		codesign --force --sign - --entitlements Resources/Thumbnail.entitlements "$$extension"; \
 	done
 	codesign --force --sign - --entitlements Resources/Thumbnail.entitlements $(PREVIEW)
@@ -68,31 +68,33 @@ $(APP)/Contents/Resources/BBCAT_LICENSE: $(BBCAT_LICENSE)
 	cp $(BBCAT_LICENSE) $@
 
 $(THUMBNAIL_BINARY): Makefile $(RUST_LIB) $(THUMBNAIL_SOURCES)
+	rm -f $(THUMBNAIL_BINARY)
 	mkdir -p $(dir $(THUMBNAIL_BINARY))
 	CLANG_MODULE_CACHE_PATH=$(CURDIR)/build/ModuleCache \
 	swiftc -module-cache-path $(CURDIR)/build/ModuleCache -target $(ARCH)-apple-macosx$(DEPLOYMENT_TARGET) \
 		-swift-version 5 -O -whole-module-optimization -parse-as-library -application-extension \
-		-module-name BBCatThumbnail -import-objc-header RustBridge/include/bbcat_bridge.h \
+		-module-name bbcatThumbnail -import-objc-header RustBridge/include/bbcat_bridge.h \
 		$(THUMBNAIL_SOURCES) $(RUST_LIB) -framework AppKit -framework QuickLookThumbnailing \
 		-Xlinker -e -Xlinker _NSExtensionMain -o $(THUMBNAIL_BINARY)
 
 thumbnail-extensions: $(THUMBNAIL_BINARY) Resources/ThumbnailInfo.plist Scripts/install-thumbnail-extensions.sh
 	bash Scripts/install-thumbnail-extensions.sh $(APP) $(THUMBNAIL_BINARY) Resources/ThumbnailInfo.plist
 
-$(PREVIEW)/Contents/MacOS/BBCatPreview: Makefile $(RUST_LIB) $(PREVIEW_SOURCES) Resources/PreviewInfo.plist
+$(PREVIEW)/Contents/MacOS/bbcatPreview: Makefile $(RUST_LIB) $(PREVIEW_SOURCES) Resources/PreviewInfo.plist
+	rm -rf $(PREVIEW)
 	mkdir -p $(PREVIEW)/Contents/MacOS
 	cp Resources/PreviewInfo.plist $(PREVIEW)/Contents/Info.plist
 	CLANG_MODULE_CACHE_PATH=$(CURDIR)/build/ModuleCache \
 	swiftc -module-cache-path $(CURDIR)/build/ModuleCache -target $(ARCH)-apple-macosx$(DEPLOYMENT_TARGET) \
 		-swift-version 5 -O -whole-module-optimization -parse-as-library -application-extension \
-		-module-name BBCatPreview -import-objc-header RustBridge/include/bbcat_bridge.h \
+		-module-name bbcatPreview -import-objc-header RustBridge/include/bbcat_bridge.h \
 		$(PREVIEW_SOURCES) $(RUST_LIB) -framework AppKit -framework QuickLookUI \
-		-Xlinker -e -Xlinker _NSExtensionMain -o $(PREVIEW)/Contents/MacOS/BBCatPreview
+		-Xlinker -e -Xlinker _NSExtensionMain -o $(PREVIEW)/Contents/MacOS/bbcatPreview
 
 run: all
 	open $(APP)
 
-$(SWIFT_TEST_BINARY): Sources/BBCat/CommandLineToolInstaller.swift Tests/CommandLineToolInstaller/main.swift
+$(SWIFT_TEST_BINARY): Sources/bbcat/CommandLineToolInstaller.swift Tests/CommandLineToolInstaller/main.swift
 	mkdir -p build/tests
 	CLANG_MODULE_CACHE_PATH=$(CURDIR)/build/ModuleCache \
 		swiftc -module-cache-path $(CURDIR)/build/ModuleCache \

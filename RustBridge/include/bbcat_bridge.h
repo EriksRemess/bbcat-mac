@@ -16,6 +16,7 @@ BbcatDocument *bbcat_document_open(const char *path);
 void bbcat_document_free(BbcatDocument *document);
 size_t bbcat_document_frame_count(const BbcatDocument *document);
 int32_t bbcat_document_is_animated(const BbcatDocument *document);
+int32_t bbcat_document_supports_scale(const BbcatDocument *document, size_t scale);
 char *bbcat_document_display_title(const BbcatDocument *document, const char *fallback);
 int32_t bbcat_document_render_frame(
     const BbcatDocument *document,

@@ -4,10 +4,10 @@
 <dict>
     <key>CFBundleDevelopmentRegion</key><string>en</string>
     <key>CFBundleDisplayName</key><string>bbcat thumbnails</string>
-    <key>CFBundleExecutable</key><string>BBCatThumbnail</string>
+    <key>CFBundleExecutable</key><string>bbcatThumbnail</string>
     <key>CFBundleIdentifier</key><string>dev.bbcat.mac.thumbnail</string>
     <key>CFBundleInfoDictionaryVersion</key><string>6.0</string>
-    <key>CFBundleName</key><string>BBCatThumbnail</string>
+    <key>CFBundleName</key><string>bbcatThumbnail</string>
     <key>CFBundlePackageType</key><string>XPC!</string>
     <key>CFBundleSupportedPlatforms</key><array><string>MacOSX</string></array>
     <key>CFBundleShortVersionString</key><string>0.1.1</string>

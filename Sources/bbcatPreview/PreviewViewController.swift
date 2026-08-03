@@ -13,7 +13,7 @@ final class PreviewViewController: NSViewController, QLPreviewingController {
 
     func preparePreviewOfFile(at url: URL, completionHandler handler: @escaping (Error?) -> Void) {
         do {
-            let document = try BBCatDocument(url: url)
+            let document = try bbcatDocument(url: url)
             let rendered = try document.frame(at: 0, scale: 1)
             artworkView.image = rendered.image
             title = document.displayTitle
