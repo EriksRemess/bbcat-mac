@@ -12,6 +12,8 @@ C-compatible bridge.
   `.xbin`)
 - Opening from Finder, the app's file picker, or a path passed to the app
 - Static artwork and timed ANSI animation playback
+- PNG export for static artwork and looping GIF export for animations
+- Popover inspector with format, dimensions, animation, and SAUCE information
 - SAUCE titles, authors, and dates in the window title
 - Crisp ×1 and ×2 rendering with responsive aspect-fit display
 - Fit-width display with vertical scrolling for artwork larger than the available screen

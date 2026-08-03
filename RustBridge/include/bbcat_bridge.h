@@ -53,6 +53,16 @@ int32_t bbcat_document_render_frame(
     size_t scale,
     BbcatFrame *frame
 );
+int32_t bbcat_document_encode_png(
+    const BbcatDocument *document,
+    size_t scale,
+    BbcatFrame *frame
+);
+int32_t bbcat_document_encode_gif(
+    const BbcatDocument *document,
+    size_t scale,
+    BbcatFrame *frame
+);
 int32_t bbcat_document_render_thumbnail(
     const BbcatDocument *document,
     size_t maximum_pixel_size,

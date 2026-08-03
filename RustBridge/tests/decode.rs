@@ -36,6 +36,20 @@ fn decodes_and_renders_ansi_through_the_c_api() {
     let signature = unsafe { std::slice::from_raw_parts(frame.data, 8) };
     assert_eq!(signature, b"\x89PNG\r\n\x1a\n");
 
+    let mut exported = bbcat_bridge::BbcatFrame {
+        data: std::ptr::null_mut(),
+        length: 0,
+        duration_ns: 0,
+    };
+    assert_eq!(
+        unsafe { bbcat_bridge::bbcat_document_encode_png(document, 1, &mut exported) },
+        1
+    );
+    assert_eq!(
+        unsafe { std::slice::from_raw_parts(exported.data, 8) },
+        b"\x89PNG\r\n\x1a\n"
+    );
+
     let mut thumbnail = bbcat_bridge::BbcatFrame {
         data: std::ptr::null_mut(),
         length: 0,
@@ -52,6 +66,7 @@ fn decodes_and_renders_ansi_through_the_c_api() {
 
     unsafe {
         bbcat_bridge::bbcat_bytes_free(frame.data, frame.length);
+        bbcat_bridge::bbcat_bytes_free(exported.data, exported.length);
         bbcat_bridge::bbcat_bytes_free(thumbnail.data, thumbnail.length);
         bbcat_bridge::bbcat_document_free(document);
     }
@@ -82,6 +97,25 @@ fn reports_animation_info_through_the_c_api() {
     assert_eq!(info.animated, 1);
     assert_eq!(info.frame_count, 2);
 
+    let mut gif = bbcat_bridge::BbcatFrame {
+        data: std::ptr::null_mut(),
+        length: 0,
+        duration_ns: 0,
+    };
+    assert_eq!(
+        unsafe { bbcat_bridge::bbcat_document_encode_gif(document, 1, &mut gif) },
+        1
+    );
+    let gif_bytes = unsafe { std::slice::from_raw_parts(gif.data, gif.length) };
+    assert_eq!(&gif_bytes[..6], b"GIF89a");
+    assert_eq!(
+        gif_bytes
+            .windows(2)
+            .filter(|bytes| *bytes == b"\x21\xf9")
+            .count(),
+        2
+    );
+
     let format = unsafe { bbcat_bridge::bbcat_document_copy_metadata_string(document, 0) };
     assert!(!format.is_null());
     assert_eq!(
@@ -90,6 +124,7 @@ fn reports_animation_info_through_the_c_api() {
     );
 
     unsafe {
+        bbcat_bridge::bbcat_bytes_free(gif.data, gif.length);
         bbcat_bridge::bbcat_string_free(format);
         bbcat_bridge::bbcat_document_free(document);
     }

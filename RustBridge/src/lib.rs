@@ -403,6 +403,81 @@ pub unsafe extern "C" fn bbcat_document_render_frame(
     }
 }
 
+fn return_encoded_bytes(result: Result<Vec<u8>, String>, output: *mut BbcatFrame) -> i32 {
+    match result {
+        Ok(bytes) => {
+            let mut bytes = bytes.into_boxed_slice();
+            let frame = BbcatFrame {
+                data: bytes.as_mut_ptr(),
+                length: bytes.len(),
+                duration_ns: 0,
+            };
+            std::mem::forget(bytes);
+            // SAFETY: Callers validate that `output` points to writable storage.
+            unsafe { output.write(frame) };
+            1
+        }
+        Err(error) => {
+            set_error(error);
+            0
+        }
+    }
+}
+
+#[unsafe(no_mangle)]
+/// Encodes the document's complete final screen as PNG bytes.
+///
+/// # Safety
+///
+/// `document` must point to a live document and `output` must point to writable
+/// `BbcatFrame` storage. Successful output bytes must be released once with
+/// [`bbcat_bytes_free`] using the returned length.
+pub unsafe extern "C" fn bbcat_document_encode_png(
+    document: *const BbcatDocument,
+    scale: usize,
+    output: *mut BbcatFrame,
+) -> i32 {
+    if document.is_null() || output.is_null() {
+        set_error("document or output was null");
+        return 0;
+    }
+    // SAFETY: Both non-null pointers remain valid for this call.
+    let document = unsafe { &(*document).document };
+    return_encoded_bytes(
+        document
+            .encode_png(scale)
+            .map_err(|error| error.to_string()),
+        output,
+    )
+}
+
+#[unsafe(no_mangle)]
+/// Encodes all animation frames as a looping GIF using bbcat's default timing.
+///
+/// # Safety
+///
+/// `document` must point to a live animated document and `output` must point to
+/// writable `BbcatFrame` storage. Successful output bytes must be released once
+/// with [`bbcat_bytes_free`] using the returned length.
+pub unsafe extern "C" fn bbcat_document_encode_gif(
+    document: *const BbcatDocument,
+    scale: usize,
+    output: *mut BbcatFrame,
+) -> i32 {
+    if document.is_null() || output.is_null() {
+        set_error("document or output was null");
+        return 0;
+    }
+    // SAFETY: Both non-null pointers remain valid for this call.
+    let document = unsafe { &(*document).document };
+    return_encoded_bytes(
+        document
+            .encode_gif(bbcat::DEFAULT_ANIMATION_BAUD, scale)
+            .map_err(|error| error.to_string()),
+        output,
+    )
+}
+
 #[unsafe(no_mangle)]
 /// Renders a square, top-left-anchored PNG thumbnail.
 ///

@@ -52,6 +52,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         fileItem.submenu = fileMenu
         let open = fileMenu.addItem(withTitle: "Open…", action: Selector(("chooseFile")), keyEquivalent: "o")
         open.target = viewer
+        fileMenu.addItem(.separator())
+        let export = fileMenu.addItem(withTitle: "Export…", action: Selector(("exportArtwork")), keyEquivalent: "e")
+        export.target = viewer
+
+        let viewItem = NSMenuItem()
+        main.addItem(viewItem)
+        let viewMenu = NSMenu(title: "View")
+        viewItem.submenu = viewMenu
+        let info = viewMenu.addItem(withTitle: "Show Info", action: Selector(("toggleInspector")), keyEquivalent: "i")
+        info.keyEquivalentModifierMask = [.command, .option]
+        info.target = viewer
         NSApp.mainMenu = main
     }
 

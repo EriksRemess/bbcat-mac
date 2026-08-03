@@ -2,8 +2,12 @@ import AppKit
 import UniformTypeIdentifiers
 
 final class ViewerController: NSWindowController, NSWindowDelegate {
+    private static let minimumWindowWidth: CGFloat = 560
     private let artworkView = ArtworkView(frame: .zero)
     private let scrollView = NSScrollView(frame: .zero)
+    private let inspectorView = InfoInspectorView(frame: .zero)
+    private let infoPopover = NSPopover()
+    private weak var infoButton: NSButton?
     private var artworkDocument: bbcatDocument?
     private var scale = 1
     private var supportsTwoX = false
@@ -19,10 +23,11 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
         )
         super.init(window: window)
         window.title = "bbcat"
-        window.minSize = NSSize(width: 400, height: 240)
+        window.minSize = NSSize(width: Self.minimumWindowWidth, height: 240)
         window.center()
         window.delegate = self
         configureContent()
+        configureInfoPopover()
         configureToolbar()
         showWelcomeArtwork()
     }
@@ -40,6 +45,19 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
         artworkView.autoresizingMask = [.width, .height]
         scrollView.documentView = artworkView
         window?.contentView = scrollView
+    }
+
+    private func configureInfoPopover() {
+        let popoverSize = NSSize(width: 310, height: 440)
+        inspectorView.frame = NSRect(origin: .zero, size: popoverSize)
+        let contentController = NSViewController()
+        contentController.view = inspectorView
+        contentController.preferredContentSize = popoverSize
+        infoPopover.contentViewController = contentController
+        infoPopover.contentSize = popoverSize
+        infoPopover.behavior = .transient
+        infoPopover.animates = true
+        infoPopover.delegate = self
     }
 
     private func configureToolbar() {
@@ -67,6 +85,8 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
             window?.title = loaded.displayTitle
             try displayFrame(generation: playbackGeneration, resizeWindow: true)
             window?.representedURL = url
+            inspectorView.show(document: loaded)
+            updateToolbarItems()
         } catch {
             present(error)
         }
@@ -101,6 +121,43 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
         }
     }
 
+    @objc func exportArtwork() {
+        guard let artworkDocument, let window else { return }
+        let type = artworkDocument.isAnimated ? UTType.gif : UTType.png
+        let panel = NSSavePanel()
+        panel.title = artworkDocument.isAnimated ? "Export Animated GIF" : "Export PNG"
+        panel.prompt = "Export"
+        panel.allowedContentTypes = [type]
+        panel.canCreateDirectories = true
+        panel.nameFieldStringValue = artworkDocument.sourceURL.deletingPathExtension()
+            .lastPathComponent + "." + type.preferredFilenameExtension!
+        let exportScale = scale
+        panel.beginSheetModal(for: window) { [weak self, artworkDocument] response in
+            guard response == .OK, let destination = panel.url else { return }
+            do {
+                let exported = try artworkDocument.export(scale: exportScale)
+                try exported.write(to: destination, options: .atomic)
+            } catch {
+                self?.present(error, message: "Could not export artwork")
+            }
+        }
+    }
+
+    @objc func toggleInspector() {
+        guard artworkDocument != nil else { return }
+        if infoPopover.isShown {
+            infoPopover.performClose(nil)
+        } else if let infoButton, infoButton.window != nil,
+                  !infoButton.isHiddenOrHasHiddenAncestor, !infoButton.visibleRect.isEmpty {
+            infoPopover.show(relativeTo: infoButton.bounds, of: infoButton, preferredEdge: .maxY)
+        } else if let contentView = window?.contentView {
+            let anchor = NSRect(x: contentView.bounds.maxX - 28, y: contentView.bounds.maxY - 1,
+                                width: 1, height: 1)
+            infoPopover.show(relativeTo: anchor, of: contentView, preferredEdge: .maxY)
+        }
+        updateToolbarItems()
+    }
+
     private func updateScaleControl(for document: bbcatDocument?) {
         supportsTwoX = document?.supports(scale: 2) == true
         if !supportsTwoX {
@@ -113,6 +170,7 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
                 configureScaleControl(control)
             }
         }
+        updateToolbarItems()
     }
 
     private func configureScaleControl(_ control: NSSegmentedControl) {
@@ -149,7 +207,7 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
 
         if resizeWindow {
             let contentSize = NSSize(
-                width: min(max(imageSize.width, 400), maxWidth),
+                width: min(max(imageSize.width, Self.minimumWindowWidth), maxWidth),
                 height: min(max(imageSize.height, 200), maxHeight)
             )
             window?.setContentSize(contentSize)
@@ -197,24 +255,44 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
         configureLayout(for: size, resizeWindow: false)
     }
 
-    private func present(_ error: Error) {
+    private func updateToolbarItems() {
+        guard let toolbar = window?.toolbar else { return }
+        for item in toolbar.items {
+            switch item.itemIdentifier {
+            case Self.exportIdentifier:
+                item.isEnabled = artworkDocument != nil
+            case Self.infoIdentifier:
+                item.isEnabled = artworkDocument != nil
+                item.label = infoPopover.isShown ? "Hide Info" : "Show Info"
+                item.toolTip = infoPopover.isShown ? "Hide artwork information" : "Show artwork information"
+                infoButton?.state = infoPopover.isShown ? .on : .off
+                infoButton?.toolTip = item.toolTip
+            default:
+                break
+            }
+        }
+    }
+
+    private func present(_ error: Error, message: String = "Could not open ANSI art") {
         playbackGeneration &+= 1
         let alert = NSAlert(error: error)
-        alert.messageText = "Could not open ANSI art"
+        alert.messageText = message
         if let window { alert.beginSheetModal(for: window) }
     }
 }
 
 extension ViewerController: NSToolbarDelegate {
     private static let openIdentifier = NSToolbarItem.Identifier("Open")
+    private static let exportIdentifier = NSToolbarItem.Identifier("Export")
     private static let scaleIdentifier = NSToolbarItem.Identifier("Scale")
+    private static let infoIdentifier = NSToolbarItem.Identifier("Info")
 
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [Self.openIdentifier, .flexibleSpace, Self.scaleIdentifier]
+        [Self.openIdentifier, Self.exportIdentifier, Self.infoIdentifier, .flexibleSpace, Self.scaleIdentifier]
     }
 
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [Self.openIdentifier, .flexibleSpace, Self.scaleIdentifier]
+        [Self.openIdentifier, Self.exportIdentifier, Self.infoIdentifier, .flexibleSpace, Self.scaleIdentifier]
     }
 
     func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier identifier: NSToolbarItem.Identifier,
@@ -227,6 +305,14 @@ extension ViewerController: NSToolbarDelegate {
             item.target = self
             item.action = #selector(chooseFile)
             item.visibilityPriority = .high
+        } else if identifier == Self.exportIdentifier {
+            item.label = "Export"
+            item.toolTip = "Export artwork"
+            item.image = NSImage(systemSymbolName: "square.and.arrow.up", accessibilityDescription: "Export")
+            item.target = self
+            item.action = #selector(exportArtwork)
+            item.isEnabled = artworkDocument != nil
+            item.visibilityPriority = .high
         } else if identifier == Self.scaleIdentifier {
             let control = NSSegmentedControl(labels: ["×1", "×2"], trackingMode: .selectOne,
                                              target: self, action: #selector(changeScale(_:)))
@@ -235,8 +321,45 @@ extension ViewerController: NSToolbarDelegate {
             item.label = "Scale"
             item.view = control
             item.isEnabled = supportsTwoX
-            item.visibilityPriority = .high
+            item.visibilityPriority = .low
+        } else if identifier == Self.infoIdentifier {
+            let button = NSButton(
+                image: NSImage(systemSymbolName: "info.circle", accessibilityDescription: "Artwork information")!,
+                target: self,
+                action: #selector(toggleInspector)
+            )
+            button.bezelStyle = .toolbar
+            button.imagePosition = .imageOnly
+            button.setButtonType(.toggle)
+            button.setAccessibilityLabel("Artwork information")
+            button.widthAnchor.constraint(equalToConstant: 32).isActive = true
+            button.heightAnchor.constraint(equalToConstant: 28).isActive = true
+            infoButton = button
+            item.label = "Show Info"
+            item.toolTip = "Show artwork information"
+            item.view = button
+            item.isEnabled = artworkDocument != nil
+            item.visibilityPriority = .user
         } else { return nil }
         return item
+    }
+}
+
+extension ViewerController: NSMenuItemValidation {
+    func validateMenuItem(_ menuItem: NSMenuItem) -> Bool {
+        if menuItem.action == #selector(exportArtwork) {
+            return artworkDocument != nil
+        }
+        if menuItem.action == #selector(toggleInspector) {
+            menuItem.title = infoPopover.isShown ? "Hide Info" : "Show Info"
+            return artworkDocument != nil
+        }
+        return true
+    }
+}
+
+extension ViewerController: NSPopoverDelegate {
+    func popoverDidClose(_ notification: Notification) {
+        updateToolbarItems()
     }
 }
