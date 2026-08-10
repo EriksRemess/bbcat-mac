@@ -29,6 +29,10 @@ pub struct BbcatFrame {
     pub duration_ns: u64,
 }
 
+// Native animation playback matches the reference captures used by ANSI art
+// packs rather than the faster terminal-oriented bbcat default.
+const NATIVE_ANIMATION_BYTES_PER_SECOND: u64 = 30_000;
+
 #[repr(C)]
 pub struct BbcatDocumentInfo {
     pub columns: usize,
@@ -92,7 +96,7 @@ fn format_sauce_date(date: &str) -> String {
 fn frame_duration(frame: &bbcat::AnimationFrame) -> Duration {
     frame.duration.unwrap_or_else(|| {
         let nanoseconds = (frame.source_bytes as u128).saturating_mul(1_000_000_000)
-            / u128::from(bbcat::DEFAULT_ANIMATION_BAUD);
+            / u128::from(NATIVE_ANIMATION_BYTES_PER_SECOND);
         Duration::from_nanos(nanoseconds.min(u128::from(u64::MAX)) as u64)
     })
 }
@@ -601,7 +605,12 @@ pub unsafe extern "C" fn bbcat_bytes_free(data: *mut u8, length: usize) {
 
 #[cfg(test)]
 mod tests {
-    use super::{dimensions_support_scale, format_sauce_date};
+    use std::path::Path;
+
+    use super::{
+        NATIVE_ANIMATION_BYTES_PER_SECOND, dimensions_support_scale, format_sauce_date,
+        frame_duration,
+    };
 
     #[test]
     fn formats_sauce_dates() {
@@ -615,5 +624,24 @@ mod tests {
         assert!(!dimensions_support_scale(Some((5_001, 5_000)), 2));
         assert!(!dimensions_support_scale(Some((usize::MAX, 1)), 2));
         assert!(!dimensions_support_scale(None, 2));
+    }
+
+    #[test]
+    fn native_animation_timing_matches_the_reference_rate() {
+        let data = b"\x1b[2J\x1b[H\x1b[1;1HA\x1b[1;1HB\x1b[2J";
+        let document = bbcat::decode_with_options(
+            data,
+            bbcat::DecodeOptions {
+                file_name: Some(Path::new("animated.ans")),
+                width: Some(1),
+            },
+        )
+        .unwrap();
+        let frame = &document.animation.as_ref().unwrap().frames[0];
+
+        assert_eq!(
+            frame_duration(frame).as_nanos(),
+            14_u128 * 1_000_000_000 / u128::from(NATIVE_ANIMATION_BYTES_PER_SECOND)
+        );
     }
 }
