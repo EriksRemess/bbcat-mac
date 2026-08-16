@@ -17,7 +17,8 @@ small C-compatible bridge.
 - Popover inspector with format, dimensions, animation, and SAUCE information
 - SAUCE titles, authors, and dates in the window title
 - Crisp ×1 and ×2 rendering with responsive aspect-fit display
-- Fit-width display with vertical scrolling for artwork larger than the available screen
+- Toggle between fit-width scrolling and vertically fitted screen display for
+  artwork larger than the available screen
 - Format-specific, cropped Finder thumbnails with extension badges
 - Full, uncropped Quick Look previews with the Space bar
 - Finder and Spotlight metadata for format, dimensions, SAUCE credits, fonts,

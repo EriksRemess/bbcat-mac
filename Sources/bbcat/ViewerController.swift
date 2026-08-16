@@ -8,9 +8,11 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
     private let inspectorView = InfoInspectorView(frame: .zero)
     private let infoPopover = NSPopover()
     private weak var infoButton: NSButton?
+    private weak var fitButton: NSButton?
     private var artworkDocument: bbcatDocument?
     private var scale = 1
     private var supportsTwoX = false
+    private var fitsToScreenVertically = false
     private var frameIndex = 0
     private var playbackGeneration = 0
 
@@ -121,6 +123,20 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
         }
     }
 
+    @objc private func toggleFitToScreen(_ sender: NSButton) {
+        guard artworkDocument != nil else {
+            sender.state = .off
+            return
+        }
+        fitsToScreenVertically = sender.state == .on
+        if let imageSize = artworkView.image?.size {
+            configureLayout(for: imageSize, resizeWindow: true)
+            scrollView.contentView.scroll(to: .zero)
+            scrollView.reflectScrolledClipView(scrollView.contentView)
+        }
+        updateToolbarItems()
+    }
+
     @objc func exportArtwork() {
         guard let artworkDocument, let window else { return }
         let type = artworkDocument.isAnimated ? UTType.gif : UTType.png
@@ -203,30 +219,46 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
         let visible = window?.screen?.visibleFrame ?? NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1200, height: 800)
         let maxWidth = floor(visible.width * 0.9)
         let maxHeight = floor(visible.height * 0.9)
-        let fitWidth = imageSize.width > maxWidth || imageSize.height > maxHeight
+        let needsFitWidth = imageSize.width > maxWidth || imageSize.height > maxHeight
 
         if resizeWindow {
-            let contentSize = NSSize(
-                width: min(max(imageSize.width, Self.minimumWindowWidth), maxWidth),
-                height: min(max(imageSize.height, 200), maxHeight)
-            )
+            let contentSize: NSSize
+            if fitsToScreenVertically {
+                let width = Self.minimumWindowWidth
+                let fittedHeight = width * imageSize.height / max(imageSize.width, 1)
+                contentSize = NSSize(
+                    width: width,
+                    height: min(max(ceil(fittedHeight), 200), maxHeight)
+                )
+            } else {
+                contentSize = NSSize(
+                    width: min(max(imageSize.width, Self.minimumWindowWidth), maxWidth),
+                    height: min(max(imageSize.height, 200), maxHeight)
+                )
+            }
             window?.setContentSize(contentSize)
             window?.center()
         }
 
-        if fitWidth {
+        if fitsToScreenVertically {
+            configureScreenFitLayout()
+        } else if needsFitWidth {
             configureFitWidthLayout(for: imageSize)
             if resizeWindow {
                 scrollView.contentView.scroll(to: .zero)
                 scrollView.reflectScrolledClipView(scrollView.contentView)
             }
         } else {
-            scrollView.hasHorizontalScroller = false
-            scrollView.hasVerticalScroller = false
-            artworkView.fitsImage = true
-            artworkView.autoresizingMask = [.width, .height]
-            artworkView.frame = NSRect(origin: .zero, size: scrollView.contentSize)
+            configureScreenFitLayout()
         }
+    }
+
+    private func configureScreenFitLayout() {
+        scrollView.hasHorizontalScroller = false
+        scrollView.hasVerticalScroller = false
+        artworkView.fitsImage = true
+        artworkView.autoresizingMask = [.width, .height]
+        artworkView.frame = NSRect(origin: .zero, size: scrollView.contentSize)
     }
 
     private func configureFitWidthLayout(for imageSize: NSSize) {
@@ -267,6 +299,12 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
                 item.toolTip = infoPopover.isShown ? "Hide artwork information" : "Show artwork information"
                 infoButton?.state = infoPopover.isShown ? .on : .off
                 infoButton?.toolTip = item.toolTip
+            case Self.fitIdentifier:
+                item.isEnabled = artworkDocument != nil
+                fitButton?.state = fitsToScreenVertically ? .on : .off
+                fitButton?.toolTip = fitsToScreenVertically
+                    ? "Use fit-width scrolling"
+                    : "Fit artwork to screen vertically"
             default:
                 break
             }
@@ -286,13 +324,16 @@ extension ViewerController: NSToolbarDelegate {
     private static let exportIdentifier = NSToolbarItem.Identifier("Export")
     private static let scaleIdentifier = NSToolbarItem.Identifier("Scale")
     private static let infoIdentifier = NSToolbarItem.Identifier("Info")
+    private static let fitIdentifier = NSToolbarItem.Identifier("FitScreen")
 
     func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [Self.openIdentifier, Self.exportIdentifier, Self.infoIdentifier, .flexibleSpace, Self.scaleIdentifier]
+        [Self.openIdentifier, Self.exportIdentifier, Self.infoIdentifier, Self.fitIdentifier,
+         .flexibleSpace, Self.scaleIdentifier]
     }
 
     func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
-        [Self.openIdentifier, Self.exportIdentifier, Self.infoIdentifier, .flexibleSpace, Self.scaleIdentifier]
+        [Self.openIdentifier, Self.exportIdentifier, Self.infoIdentifier, Self.fitIdentifier,
+         .flexibleSpace, Self.scaleIdentifier]
     }
 
     func toolbar(_ toolbar: NSToolbar, itemForItemIdentifier identifier: NSToolbarItem.Identifier,
@@ -321,6 +362,24 @@ extension ViewerController: NSToolbarDelegate {
             item.label = "Scale"
             item.view = control
             item.isEnabled = supportsTwoX
+            item.visibilityPriority = .low
+        } else if identifier == Self.fitIdentifier {
+            let button = NSButton(
+                image: NSImage(systemSymbolName: "arrow.up.and.down", accessibilityDescription: "Fit artwork vertically")!,
+                target: self,
+                action: #selector(toggleFitToScreen(_:))
+            )
+            button.bezelStyle = .toolbar
+            button.imagePosition = .imageOnly
+            button.setButtonType(.toggle)
+            button.setAccessibilityLabel("Fit artwork to screen vertically")
+            button.widthAnchor.constraint(equalToConstant: 32).isActive = true
+            button.heightAnchor.constraint(equalToConstant: 28).isActive = true
+            fitButton = button
+            item.label = "Fit Screen"
+            item.toolTip = "Fit artwork to screen vertically"
+            item.view = button
+            item.isEnabled = artworkDocument != nil
             item.visibilityPriority = .low
         } else if identifier == Self.infoIdentifier {
             let button = NSButton(
