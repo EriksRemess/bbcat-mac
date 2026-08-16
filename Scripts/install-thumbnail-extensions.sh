@@ -19,6 +19,7 @@ thumbnail_types=(
     "darkdraw dev.bbcat.darkdraw bbcat — DarkDraw (.ddw) thumbnails"
     "artworx dev.bbcat.artworx bbcat — ArtWorx (.adf) thumbnails"
     "ripscrip dev.bbcat.ripscrip bbcat — RIPscrip (.rip) thumbnails"
+    "tundradraw dev.bbcat.tundradraw bbcat — TundraDraw (.tnd) thumbnails"
     "xbin dev.bbcat.xbin bbcat — XBin (.xb, .xbin) thumbnails"
 )
 

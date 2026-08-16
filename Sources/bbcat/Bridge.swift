@@ -40,6 +40,7 @@ struct bbcatDocumentInfo {
     let raster: Bool
     let supportsUTF8: Bool
     let embeddedFont: Bool
+    let trueColor: Bool
     let hasSauce: Bool
     let sauceUsesICEColors: Bool
     let sauceLetterSpacing: Int?
@@ -131,6 +132,7 @@ final class bbcatDocument {
             raster: raw.raster != 0,
             supportsUTF8: raw.utf8_supported != 0,
             embeddedFont: raw.embedded_font != 0,
+            trueColor: raw.true_color != 0,
             hasSauce: raw.has_sauce != 0,
             sauceUsesICEColors: raw.sauce_ice_colors != 0,
             sauceLetterSpacing: raw.sauce_letter_spacing == 0 ? nil : Int(raw.sauce_letter_spacing),

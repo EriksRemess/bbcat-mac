@@ -24,6 +24,7 @@ typedef struct {
     int32_t raster;
     int32_t utf8_supported;
     int32_t embedded_font;
+    int32_t true_color;
     int32_t animated;
     int32_t has_sauce;
     int32_t sauce_ice_colors;

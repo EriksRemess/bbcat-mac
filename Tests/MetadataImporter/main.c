@@ -49,6 +49,7 @@ int main(int argc, const char *argv[]) {
     CFNumberRef columns = CFDictionaryGetValue(attributes, CFSTR("dev_bbcat_columns"));
     CFStringRef characterGrid =
         CFDictionaryGetValue(attributes, CFSTR("dev_bbcat_character_grid"));
+    CFBooleanRef trueColor = CFDictionaryGetValue(attributes, CFSTR("dev_bbcat_true_color"));
     Boolean hasIrrelevantFlags =
         CFDictionaryContainsKey(attributes, CFSTR("dev_bbcat_animated")) ||
         CFDictionaryContainsKey(attributes, CFSTR("dev_bbcat_frame_count")) ||
@@ -56,7 +57,7 @@ int main(int argc, const char *argv[]) {
         CFDictionaryContainsKey(attributes, CFSTR("dev_bbcat_ice_colors"));
     int result = 0;
     if (!imported || format == NULL || columns == NULL || characterGrid == NULL ||
-        hasIrrelevantFlags) {
+        trueColor == NULL || CFBooleanGetValue(trueColor) || hasIrrelevantFlags) {
         result = fail("metadata importer did not return expected document information");
     } else {
         puts("Metadata importer tests passed");

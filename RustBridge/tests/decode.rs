@@ -2,6 +2,7 @@ use std::{
     ffi::{CStr, CString},
     mem::MaybeUninit,
     path::PathBuf,
+    time::{SystemTime, UNIX_EPOCH},
 };
 
 #[test]
@@ -68,6 +69,56 @@ fn decodes_and_renders_ansi_through_the_c_api() {
         bbcat_bridge::bbcat_bytes_free(frame.data, frame.length);
         bbcat_bridge::bbcat_bytes_free(exported.data, exported.length);
         bbcat_bridge::bbcat_bytes_free(thumbnail.data, thumbnail.length);
+        bbcat_bridge::bbcat_document_free(document);
+    }
+}
+
+#[test]
+fn decodes_and_renders_tundradraw_true_color_through_the_c_api() {
+    let unique = SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap()
+        .as_nanos();
+    let path = std::env::temp_dir().join(format!("bbcat-bridge-{unique}.tnd"));
+    std::fs::write(&path, b"\x18TUNDRA24\x06A\0\x12\x34\x56\0\x65\x43\x21").unwrap();
+    let c_path = CString::new(path.to_string_lossy().as_bytes()).unwrap();
+    let document = bbcat_bridge::bbcat_document_open(c_path.as_ptr());
+    std::fs::remove_file(path).unwrap();
+    assert!(!document.is_null());
+
+    let mut info = MaybeUninit::<bbcat_bridge::BbcatDocumentInfo>::uninit();
+    assert_eq!(
+        unsafe { bbcat_bridge::bbcat_document_copy_info(document, info.as_mut_ptr()) },
+        1
+    );
+    let info = unsafe { info.assume_init() };
+    assert_eq!((info.columns, info.rows), (80, 1));
+    assert_eq!(info.true_color, 1);
+    assert_eq!(info.raster, 0);
+
+    let format = unsafe { bbcat_bridge::bbcat_document_copy_metadata_string(document, 0) };
+    assert_eq!(
+        unsafe { CStr::from_ptr(format) }.to_str().unwrap(),
+        "TundraDraw TND"
+    );
+
+    let mut frame = bbcat_bridge::BbcatFrame {
+        data: std::ptr::null_mut(),
+        length: 0,
+        duration_ns: 0,
+    };
+    assert_eq!(
+        unsafe { bbcat_bridge::bbcat_document_render_frame(document, 0, 1, &mut frame) },
+        1
+    );
+    let png = unsafe { std::slice::from_raw_parts(frame.data, frame.length) };
+    assert_eq!(&png[..8], b"\x89PNG\r\n\x1a\n");
+    assert!(png.windows(3).any(|bytes| bytes == [0x12, 0x34, 0x56]));
+    assert!(png.windows(3).any(|bytes| bytes == [0x65, 0x43, 0x21]));
+
+    unsafe {
+        bbcat_bridge::bbcat_bytes_free(frame.data, frame.length);
+        bbcat_bridge::bbcat_string_free(format);
         bbcat_bridge::bbcat_document_free(document);
     }
 }

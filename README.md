@@ -1,18 +1,19 @@
 # bbcat for macOS
 
 A native AppKit viewer for ANSI, ASCII, DIZ, NFO, DarkDraw, ArtWorx, RIPscrip,
-and XBin artwork, ported from `bbcat-gtk`. The Swift interface uses the original
-Rust [`bbcat`](https://bbcat.dev/) decoder and renderer through a small
-C-compatible bridge.
+TundraDraw, and XBin artwork, ported from `bbcat-gtk`. The Swift interface uses
+the original Rust [`bbcat`](https://bbcat.dev/) decoder and renderer through a
+small C-compatible bridge.
 
 ## Features
 
 - ANSI (`.ans`), ASCII (`.asc`), DIZ (`.diz`), and NFO (`.nfo`)
-- DarkDraw (`.ddw`), ArtWorx (`.adf`), RIPscrip (`.rip`), and XBin (`.xb`,
-  `.xbin`)
+- DarkDraw (`.ddw`), ArtWorx (`.adf`), RIPscrip (`.rip`), TundraDraw (`.tnd`),
+  and XBin (`.xb`, `.xbin`)
 - Opening from Finder, the app's file picker, or a path passed to the app
 - Static artwork and timed ANSI animation playback
-- PNG export for static artwork and looping GIF export for animations
+- PNG export for static artwork, preserving TundraDraw 24-bit RGB colors, and
+  looping GIF export for animations
 - Popover inspector with format, dimensions, animation, and SAUCE information
 - SAUCE titles, authors, and dates in the window title
 - Crisp ×1 and ×2 rendering with responsive aspect-fit display

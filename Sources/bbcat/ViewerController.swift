@@ -94,11 +94,11 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
 
     @objc private func chooseFile() {
         let panel = NSOpenPanel()
-        panel.title = "Open ANSI art"
+        panel.title = "Open artwork"
         panel.prompt = "Open"
         panel.allowsMultipleSelection = false
         panel.canChooseDirectories = false
-        panel.allowedContentTypes = ["ans", "asc", "diz", "nfo", "ddw", "adf", "rip", "xb", "xbin"]
+        panel.allowedContentTypes = ["ans", "asc", "diz", "nfo", "ddw", "adf", "rip", "tnd", "xb", "xbin"]
             .compactMap { UTType(filenameExtension: $0) }
         panel.beginSheetModal(for: window!) { [weak self] response in
             if response == .OK, let url = panel.url { self?.open(url) }
@@ -179,7 +179,7 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
         control.toolTip = switch (artworkDocument, supportsTwoX) {
         case (nil, _): "Open an artwork to change its rendering scale"
         case (_, true): "Rendering scale"
-        case (_, false): "2x rendering exceeds the canvas pixel safety limit"
+        case (_, false): "2x rendering exceeds the canvas safety limit"
         }
     }
 
@@ -273,7 +273,7 @@ final class ViewerController: NSWindowController, NSWindowDelegate {
         }
     }
 
-    private func present(_ error: Error, message: String = "Could not open ANSI art") {
+    private func present(_ error: Error, message: String = "Could not open artwork") {
         playbackGeneration &+= 1
         let alert = NSAlert(error: error)
         alert.messageText = message
@@ -300,7 +300,7 @@ extension ViewerController: NSToolbarDelegate {
         let item = NSToolbarItem(itemIdentifier: identifier)
         if identifier == Self.openIdentifier {
             item.label = "Open"
-            item.toolTip = "Open ANSI art"
+            item.toolTip = "Open artwork"
             item.image = NSImage(systemSymbolName: "folder", accessibilityDescription: "Open")
             item.target = self
             item.action = #selector(chooseFile)

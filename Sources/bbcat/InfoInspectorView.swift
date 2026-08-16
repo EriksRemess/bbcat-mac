@@ -61,6 +61,7 @@ final class InfoInspectorView: NSView {
             ("Pixels", dimensions(width: info.pixelWidth, height: info.pixelHeight)),
             ("Glyph", "\(info.glyphWidth) × \(info.glyphHeight) px"),
             ("Content", info.raster ? "Raster graphics" : "Character art"),
+            ("Colors", info.trueColor ? "24-bit RGB" : "Indexed palette"),
             ("UTF-8", info.supportsUTF8 ? "Supported" : "Not supported"),
         ]
         if info.embeddedFont { artworkRows.append(("Font data", "Embedded")) }

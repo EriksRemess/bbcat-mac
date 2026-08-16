@@ -159,6 +159,7 @@ static Boolean GetMetadataForFile(void *instance, CFMutableDictionaryRef rawAttr
         attributes[@"dev_bbcat_glyph_width"] = @(info.glyph_width);
         attributes[@"dev_bbcat_glyph_height"] = @(info.glyph_height);
         attributes[@"dev_bbcat_raster"] = @(info.raster != 0);
+        attributes[@"dev_bbcat_true_color"] = @(info.true_color != 0);
         attributes[@"dev_bbcat_utf8_supported"] = @(info.utf8_supported != 0);
         if (info.embedded_font) {
             attributes[@"dev_bbcat_embedded_font"] = @YES;

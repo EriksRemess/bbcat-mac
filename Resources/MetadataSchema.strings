@@ -5,6 +5,7 @@
 "dev_bbcat_glyph_width" = "Glyph width";
 "dev_bbcat_glyph_height" = "Glyph height";
 "dev_bbcat_raster" = "Raster artwork";
+"dev_bbcat_true_color" = "True color";
 "dev_bbcat_utf8_supported" = "UTF-8 export";
 "dev_bbcat_embedded_font" = "Embedded font";
 "dev_bbcat_animated" = "Animated";

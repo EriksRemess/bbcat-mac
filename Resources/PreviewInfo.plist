@@ -26,6 +26,7 @@
                 <string>dev.bbcat.darkdraw</string>
                 <string>dev.bbcat.artworx</string>
                 <string>dev.bbcat.ripscrip</string>
+                <string>dev.bbcat.tundradraw</string>
                 <string>dev.bbcat.xbin</string>
             </array>
             <key>QLSupportsSearchableItems</key><false/>

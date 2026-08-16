@@ -12,10 +12,11 @@ thread_local! {
     static LAST_ERROR: RefCell<Option<String>> = const { RefCell::new(None) };
 }
 
-// Keep this in sync with bbcat's PNG encoder safety limit. The dependency is
-// pinned in Cargo.lock, and checking it here avoids allocating a second, very
+// Keep these in sync with bbcat's PNG encoder safety limits. The dependency is
+// pinned in Cargo.lock, and checking them here avoids allocating a second, very
 // large PNG merely to determine whether the UI should offer 2x rendering.
 const MAX_PNG_PIXELS: usize = 100_000_000;
+const MAX_PNG_BUFFER_BYTES: usize = 100_000_000;
 
 pub struct BbcatDocument {
     document: bbcat::Document,
@@ -46,6 +47,7 @@ pub struct BbcatDocumentInfo {
     pub raster: i32,
     pub utf8_supported: i32,
     pub embedded_font: i32,
+    pub true_color: i32,
     pub animated: i32,
     pub has_sauce: i32,
     pub sauce_ice_colors: i32,
@@ -214,6 +216,7 @@ pub unsafe extern "C" fn bbcat_document_copy_info(
             raster: i32::from(source.raster),
             utf8_supported: i32::from(source.utf8_supported),
             embedded_font: i32::from(source.embedded_font),
+            true_color: i32::from(source.format == bbcat::Format::TundraDraw),
             animated: i32::from(source.animated),
             has_sauce: i32::from(source.sauce.is_some()),
             sauce_ice_colors,
@@ -290,21 +293,40 @@ pub unsafe extern "C" fn bbcat_document_supports_scale(
         return 0;
     }
     // SAFETY: A non-null document pointer is owned by the caller for this call.
-    let dimensions = unsafe { (*document).info.pixel_dimensions };
-    i32::from(dimensions_support_scale(dimensions, scale))
+    let document = unsafe { &*document };
+    i32::from(dimensions_support_scale(
+        document.info.pixel_dimensions,
+        scale,
+        document.document.format == bbcat::Format::TundraDraw,
+    ))
 }
 
-fn dimensions_support_scale(dimensions: Option<(usize, usize)>, scale: usize) -> bool {
-    dimensions.is_some_and(|(width, height)| {
-        width
-            .checked_mul(scale)
-            .and_then(|width| {
-                height
-                    .checked_mul(scale)
-                    .and_then(|height| width.checked_mul(height))
-            })
-            .is_some_and(|pixels| pixels <= MAX_PNG_PIXELS)
-    })
+fn dimensions_support_scale(
+    dimensions: Option<(usize, usize)>,
+    scale: usize,
+    true_color: bool,
+) -> bool {
+    let Some((width, height)) = dimensions else {
+        return false;
+    };
+    let Some(width) = width.checked_mul(scale) else {
+        return false;
+    };
+    let Some(height) = height.checked_mul(scale) else {
+        return false;
+    };
+    let Some(pixels) = width.checked_mul(height) else {
+        return false;
+    };
+    if pixels > MAX_PNG_PIXELS {
+        return false;
+    }
+    !true_color
+        || width
+            .checked_mul(3)
+            .and_then(|row| row.checked_add(1))
+            .and_then(|row| row.checked_mul(height))
+            .is_some_and(|bytes| bytes <= MAX_PNG_BUFFER_BYTES)
 }
 
 #[unsafe(no_mangle)]
@@ -620,10 +642,12 @@ mod tests {
 
     #[test]
     fn checks_scaled_canvas_against_png_safety_limit() {
-        assert!(dimensions_support_scale(Some((5_000, 5_000)), 2));
-        assert!(!dimensions_support_scale(Some((5_001, 5_000)), 2));
-        assert!(!dimensions_support_scale(Some((usize::MAX, 1)), 2));
-        assert!(!dimensions_support_scale(None, 2));
+        assert!(dimensions_support_scale(Some((5_000, 5_000)), 2, false));
+        assert!(!dimensions_support_scale(Some((5_001, 5_000)), 2, false));
+        assert!(!dimensions_support_scale(Some((usize::MAX, 1)), 2, false));
+        assert!(!dimensions_support_scale(None, 2, false));
+        assert!(dimensions_support_scale(Some((4_000, 2_000)), 2, true));
+        assert!(!dimensions_support_scale(Some((5_000, 5_000)), 2, true));
     }
 
     #[test]

@@ -53,9 +53,14 @@ fn pixel_color(screen: &Screen, x: usize, y: usize) -> Result<[u8; 3], String> {
     }
 
     let (glyph_width, glyph_height) = screen.glyph_dimensions();
+    let column = x / glyph_width;
+    let row = y / glyph_height;
     let cell = screen
-        .cell(x / glyph_width, y / glyph_height)
+        .cell(column, row)
         .ok_or("character pixel is outside the rendered image")?;
+    let (foreground_color, background_color) = screen
+        .cell_colors(column, row)
+        .ok_or("character colors are outside the rendered image")?;
     let glyph_row = y % glyph_height;
     let glyph_offset = usize::from(cell.character)
         .checked_mul(glyph_height)
@@ -71,11 +76,11 @@ fn pixel_color(screen: &Screen, x: usize, y: usize) -> Result<[u8; 3], String> {
         8 if (0xc0..=0xdf).contains(&cell.character) => bits & 1 != 0,
         _ => false,
     };
-    Ok(screen.color(if foreground {
-        cell.foreground
+    Ok(if foreground {
+        foreground_color
     } else {
-        cell.background
-    }))
+        background_color
+    })
 }
 
 fn rgb_png(width: usize, height: usize, scanlines: &[u8]) -> Vec<u8> {
@@ -140,7 +145,7 @@ fn crc32(data: &[u8]) -> u32 {
 
 #[cfg(test)]
 mod tests {
-    use super::encode_thumbnail;
+    use super::{encode_thumbnail, pixel_color};
     use std::path::Path;
 
     #[test]
@@ -157,5 +162,23 @@ mod tests {
         assert_eq!(&png[..8], b"\x89PNG\r\n\x1a\n");
         assert_eq!(u32::from_be_bytes(png[16..20].try_into().unwrap()), 16);
         assert_eq!(u32::from_be_bytes(png[20..24].try_into().unwrap()), 16);
+    }
+
+    #[test]
+    fn preserves_tundradraw_true_colors() {
+        let document = bbcat::decode_with_options(
+            b"\x18TUNDRA24\x06\xdb\0\x12\x34\x56\0\x65\x43\x21",
+            bbcat::DecodeOptions {
+                file_name: Some(Path::new("drawing.tnd")),
+                width: Some(1),
+            },
+        )
+        .unwrap();
+
+        assert_eq!(
+            pixel_color(&document.screen, 0, 0).unwrap(),
+            [0x12, 0x34, 0x56]
+        );
+        assert!(encode_thumbnail(&document.screen, 8).is_ok());
     }
 }

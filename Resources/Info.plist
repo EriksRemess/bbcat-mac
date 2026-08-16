@@ -65,6 +65,13 @@
             <key>LSItemContentTypes</key><array><string>dev.bbcat.ripscrip</string></array>
         </dict>
         <dict>
+            <key>CFBundleTypeName</key><string>TundraDraw artwork</string>
+            <key>CFBundleTypeRole</key><string>Viewer</string>
+            <key>CFBundleTypeIconFile</key><string>bbcat.icns</string>
+            <key>LSHandlerRank</key><string>Alternate</string>
+            <key>LSItemContentTypes</key><array><string>dev.bbcat.tundradraw</string></array>
+        </dict>
+        <dict>
             <key>CFBundleTypeName</key><string>XBin artwork</string>
             <key>CFBundleTypeRole</key><string>Viewer</string>
             <key>CFBundleTypeIconFile</key><string>bbcat.icns</string>
@@ -133,6 +140,14 @@
             <key>UTTypeConformsTo</key><array><string>dev.bbcat.document</string><string>public.content</string><string>public.data</string></array>
             <key>UTTypeTagSpecification</key><dict>
                 <key>public.filename-extension</key><array><string>rip</string></array>
+            </dict>
+        </dict>
+        <dict>
+            <key>UTTypeIdentifier</key><string>dev.bbcat.tundradraw</string>
+            <key>UTTypeDescription</key><string>TundraDraw artwork</string>
+            <key>UTTypeConformsTo</key><array><string>dev.bbcat.document</string><string>public.content</string><string>public.data</string></array>
+            <key>UTTypeTagSpecification</key><dict>
+                <key>public.filename-extension</key><array><string>tnd</string></array>
             </dict>
         </dict>
         <dict>
